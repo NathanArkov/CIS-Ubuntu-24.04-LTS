@@ -31,7 +31,7 @@ check_kernel_module() {
     local module_type=$2
     # Audit
     if lsmod | grep -q "$module_name"; then
-        echo "Kernel module $module_name is loaded."
+        echo "[RISK] Kernel module $module_name is loaded."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -44,7 +44,7 @@ check_kernel_module() {
     fi
     # Check if the module is blacklisted
     if ! grep -q "blacklist $module_name" /etc/modprobe.d/*.conf; then
-        echo "Kernel module $module_name is not blacklisted."
+        echo "[RISK] Kernel module $module_name is not blacklisted."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -56,7 +56,7 @@ check_kernel_module() {
     fi
     # Check if the module is set to not load
     if ! grep -q "install $module_name /bin/false" /etc/modprobe.d/*.conf; then
-        echo "Kernel module $module_name is not set to not load."
+        echo "[RISK] Kernel module $module_name is not set to not load."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -74,7 +74,7 @@ check_filesystem_option() {
     local option=$2
     # Audit
     if ! findmnt -kn "$mount_point" | grep -q "$option"; then
-        echo "Option $option is not set on $mount_point."
+        echo "[RISK] Option $option is not set on $mount_point."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -97,7 +97,7 @@ audit_remediate_var_log_audit_partition() {
     if findmnt -kn /var/log/audit &>/dev/null; then
         echo "/var/log/audit is mounted on a separate partition."
     else
-        echo "/var/log/audit is NOT mounted on a separate partition."
+        echo "[RISK] /var/log/audit is NOT mounted on a separate partition."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -112,7 +112,7 @@ audit_remediate_var_log_partition() {
     if findmnt -kn /var/log &>/dev/null; then
         echo "/var/log is mounted on a separate partition."
     else
-        echo "/var/log is NOT mounted on a separate partition."
+        echo "[RISK] /var/log is NOT mounted on a separate partition."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -127,7 +127,7 @@ audit_remediate_var_tmp_partition() {
     if findmnt -kn /var/tmp &>/dev/null; then
         echo "/var/tmp is mounted on a separate partition."
     else
-        echo "/var/tmp is NOT mounted on a separate partition."
+        echo "[RISK] /var/tmp is NOT mounted on a separate partition."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -142,7 +142,7 @@ audit_remediate_gpg_keys() {
     if apt-key list &>/dev/null; then
         echo "GPG keys are configured."
     else
-        echo "GPG keys are NOT configured."
+        echo "[RISK] GPG keys are NOT configured."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -157,7 +157,7 @@ audit_remediate_package_repositories() {
     if apt-cache policy &>/dev/null; then
         echo "Package manager repositories are configured."
     else
-        echo "Package manager repositories are NOT configured."
+        echo "[RISK] Package manager repositories are NOT configured."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -172,7 +172,7 @@ audit_remediate_updates() {
     if apt update && apt -s upgrade &>/dev/null; then
         echo "System is up to date."
     else
-        echo "System is NOT up to date."
+        echo "[RISK] System is NOT up to date."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -188,7 +188,7 @@ audit_remediate_apparmor_installed() {
     if dpkg-query -s apparmor &>/dev/null; then
         echo "AppArmor is installed."
     else
-        echo "AppArmor is NOT installed."
+        echo "[RISK] AppArmor is NOT installed."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -204,7 +204,7 @@ audit_remediate_apparmor_bootloader() {
     if grep -q "apparmor=1" /boot/grub/grub.cfg; then
         echo "AppArmor is enabled in the bootloader configuration."
     else
-        echo "AppArmor is NOT enabled in the bootloader configuration."
+        echo "[RISK] AppArmor is NOT enabled in the bootloader configuration."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -221,7 +221,7 @@ audit_remediate_apparmor_profiles() {
     if apparmor_status | grep -q "enforce\\|complain"; then
         echo "All AppArmor profiles are in enforce or complain mode."
     else
-        echo "Not all AppArmor profiles are in enforce or complain mode."
+        echo "[RISK] Not all AppArmor profiles are in enforce or complain mode."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -237,7 +237,7 @@ audit_remediate_apparmor_enforce() {
     if apparmor_status | grep -q "enforce"; then
         echo "All AppArmor profiles are enforcing."
     else
-        echo "Not all AppArmor profiles are enforcing."
+        echo "[RISK] Not all AppArmor profiles are enforcing."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -252,7 +252,7 @@ audit_remediate_bootloader_password() {
     if grep -q "^set superusers" /boot/grub/grub.cfg; then
         echo "Bootloader password is set."
     else
-        echo "Bootloader password is NOT set."
+        echo "[RISK] Bootloader password is NOT set."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -267,7 +267,7 @@ audit_remediate_bootloader_config() {
     if stat -Lc "%a" /boot/grub/grub.cfg | grep -q "600"; then
         echo "Bootloader config access is configured correctly."
     else
-        echo "Bootloader config access is NOT configured correctly."
+        echo "[RISK] Bootloader config access is NOT configured correctly."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -284,7 +284,7 @@ audit_remediate_aslr() {
     if sysctl kernel.randomize_va_space | grep -q "2"; then
         echo "Address space layout randomization (ASLR) is enabled."
     else
-        echo "Address space layout randomization (ASLR) is NOT enabled."
+        echo "[RISK] Address space layout randomization (ASLR) is NOT enabled."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -301,7 +301,7 @@ audit_remediate_ptrace_scope() {
     if sysctl kernel.yama.ptrace_scope | grep -q "[1-3]"; then
         echo "ptrace_scope is restricted."
     else
-        echo "ptrace_scope is NOT restricted."
+        echo "[RISK] ptrace_scope is NOT restricted."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -318,7 +318,7 @@ audit_remediate_core_dumps() {
     if grep -q "hard core 0" /etc/security/limits.conf && sysctl fs.suid_dumpable | grep -q "0"; then
         echo "Core dumps are restricted."
     else
-        echo "Core dumps are NOT restricted."
+        echo "[RISK] Core dumps are NOT restricted."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -334,7 +334,7 @@ ensure_prelink_not_installed() {
     answer="null"
     # Audit
     if dpkg-query -s prelink &>/dev/null; then
-        echo -e "\e[31mprelink is installed\e[0m"
+        echo -e "[RISK] \e[31mprelink is installed\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -351,7 +351,7 @@ ensure_motd_configured_properly() {
     answer="null"
     # Audit
     if grep -E -i '(\v|\r|\m|\s|$(grep '^ID=' /etc/os-release | cut -d= -f2 | sed -e 's/\"//g'))' /etc/motd; then
-        echo -e "\e[31mMessage of the day contains OS information\e[0m"
+        echo -e "[RISK] \e[31mMessage of the day contains OS information\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -367,7 +367,7 @@ ensure_remote_login_warning_banner_configured_properly() {
     answer="null"
     # Audit
     if grep -E -i '(\v|\r|\m|\s|$(grep '^ID=' /etc/os-release | cut -d= -f2 | sed -e 's/\"//g'))' /etc/issue.net; then
-        echo -e "\e[31mRemote login warning banner contains OS information\e[0m"
+        echo -e "[RISK] \e[31mRemote login warning banner contains OS information\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -383,7 +383,7 @@ ensure_local_login_warning_banner_configured_properly() {
     answer="null"
     # Audit
     if grep -E -i '(\v|\r|\m|\s|$(grep '^ID=' /etc/os-release | cut -d= -f2 | sed -e 's/\"//g'))' /etc/issue; then
-        echo -e "\e[31mLocal login warning banner contains OS information\e[0m"
+        echo -e "[RISK] \e[31mLocal login warning banner contains OS information\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -403,6 +403,7 @@ audit_and_remediate_gdm_automount() {
     if [ "$automount" = "false" ] && [ "$automount_open" = "false" ]; then
         echo "GDM automatic mounting of removable media is already disabled."
     else
+        echo "[RISK] GDM automatic mounting of removable media is enabled."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -420,6 +421,7 @@ audit_and_remediate_gdm_automount_lock() {
        grep -Psrilq "^\h*automount-open\h*=\h*false\b" /etc/dconf/db/local.d/locks/*; then
         echo "GDM automatic mounting of removable media is locked and set to false."
     else
+        echo "[RISK] GDM automatic mounting of removable media is not locked."
         # Remediation
         read -p "Lock GDM auto mount ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -437,6 +439,7 @@ audit_and_remediate_gdm_autorun_never() {
     if [ "$autorun_never" = "true" ]; then
         echo "GDM autorun-never is already enabled."
     else
+        echo "[RISK] GDM autorun-never is not enabled."
         # Remediation
         read -p "Activate GDM autorun-never ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -450,6 +453,7 @@ audit_and_remediate_xdmcp() {
     answer="null"
     # Audit
     if grep -Psil -- '^\h*\[xdmcp\]' /etc/{gdm3,gdm}/{custom,daemon}.conf | xargs -I{} awk '/\[xdmcp\]/{f=1;next}/\[/{f=0}f{if(/^\s*Enable\s*=\s*true/)print "The file: \""{}"\" includes: \""$0"\" in the \"[xdmcp]\" block"}' | grep -q 'Enable=true'; then
+        echo "[RISK] XDMCP is enabled."
         # Remediation
         read -p "Disable XDMCP ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
@@ -469,7 +473,7 @@ audit_and_remediate_autofs() {
         if systemctl is-enabled autofs.service 2>/dev/null | grep -q 'enabled'; then
             echo "autofs.service is enabled."
             if systemctl is-active autofs.service 2>/dev/null | grep -q '^active'; then
-                echo "autofs.service is active."
+                echo "[RISK] autofs.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -492,7 +496,7 @@ audit_and_remediate_avahi() {
         if systemctl is-enabled avahi-daemon.service 2>/dev/null | grep -q 'enabled'; then
             echo "avahi-daemon.service is enabled."
             if systemctl is-active avahi-daemon.service 2>/dev/null | grep -q '^active'; then
-                echo "avahi-daemon.service is active."
+                echo "[RISK] avahi-daemon.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -515,7 +519,7 @@ audit_and_remediate_dhcp() {
         if systemctl is-enabled isc-dhcp-server.service 2>/dev/null | grep -q 'enabled'; then
             echo "isc-dhcp-server.service is enabled."
             if systemctl is-active isc-dhcp-server.service 2>/dev/null | grep -q '^active'; then
-                echo "isc-dhcp-server.service is active."
+                echo "[RISK] isc-dhcp-server.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -538,7 +542,7 @@ audit_and_remediate_dns() {
         if systemctl is-enabled named.service 2>/dev/null | grep -q 'enabled'; then
             echo "named.service is enabled."
             if systemctl is-active named.service 2>/dev/null | grep -q '^active'; then
-                echo "named.service is active."
+                echo "[RISK] named.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -561,7 +565,7 @@ audit_and_remediate_dnsmasq() {
         if systemctl is-enabled dnsmasq.service 2>/dev/null | grep -q 'enabled'; then
             echo "dnsmasq.service is enabled."
             if systemctl is-active dnsmasq.service 2>/dev/null | grep -q '^active'; then
-                echo "dnsmasq.service is active."
+                echo "[RISK] dnsmasq.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -584,7 +588,7 @@ audit_and_remediate_ftp() {
         if systemctl is-enabled vsftpd.service 2>/dev/null | grep -q 'enabled'; then
             echo "vsftpd.service is enabled."
             if systemctl is-active vsftpd.service 2>/dev/null | grep -q '^active'; then
-                echo "vsftpd.service is active."
+                echo "[RISK] vsftpd.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -607,7 +611,7 @@ audit_and_remediate_ldap() {
         if systemctl is-enabled slapd.service 2>/dev/null | grep -q 'enabled'; then
             echo "slapd.service is enabled."
             if systemctl is-active slapd.service 2>/dev/null | grep -q '^active'; then
-                echo "slapd.service is active."
+                echo "[RISK] slapd.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -629,7 +633,7 @@ audit_and_remediate_message_access() {
         if systemctl is-enabled dovecot.service 2>/dev/null | grep -q 'enabled'; then
             echo "dovecot.service is enabled."
             if systemctl is-active dovecot.service 2>/dev/null | grep -q '^active'; then
-                echo "dovecot.service is active."
+                echo "[RISK] dovecot.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -652,7 +656,7 @@ audit_and_remediate_nfs() {
         if systemctl is-enabled nfs-server.service 2>/dev/null | grep -q 'enabled'; then
             echo "nfs-server.service is enabled."
             if systemctl is-active nfs-server.service 2>/dev/null | grep -q '^active'; then
-                echo "nfs-server.service is active."
+                echo "[RISK] nfs-server.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -675,7 +679,7 @@ audit_and_remediate_nis() {
         if systemctl is-enabled ypserv.service 2>/dev/null | grep -q 'enabled'; then
             echo "ypserv.service is enabled."
             if systemctl is-active ypserv.service 2>/dev/null | grep -q '^active'; then
-                echo "ypserv.service is active."
+                echo "[RISK] ypserv.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -698,7 +702,7 @@ audit_and_remediate_print_server() {
         if systemctl is-enabled cups.service 2>/dev/null | grep -q 'enabled'; then
             echo "cups.service is enabled."
             if systemctl is-active cups.service 2>/dev/null | grep -q '^active'; then
-                echo "cups.service is active."
+                echo "[RISK] cups.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -721,7 +725,7 @@ audit_and_remediate_rpcbind() {
         if systemctl is-enabled rpcbind.service 2>/dev/null | grep -q 'enabled'; then
             echo "rpcbind.service is enabled."
             if systemctl is-active rpcbind.service 2>/dev/null | grep -q '^active'; then
-                echo "rpcbind.service is active."
+                echo "[RISK] rpcbind.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -744,7 +748,7 @@ audit_and_remediate_samba() {
         if systemctl is-enabled smbd.service 2>/dev/null | grep -q 'enabled'; then
             echo "smbd.service is enabled."
             if systemctl is-active smbd.service 2>/dev/null | grep -q '^active'; then
-                echo "smbd.service is active."
+                echo "[RISK] smbd.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -767,7 +771,7 @@ audit_and_remediate_rsync() {
         if systemctl is-enabled rsync.service 2>/dev/null | grep -q 'enabled'; then
             echo "rsync.service is enabled."
             if systemctl is-active rsync.service 2>/dev/null | grep -q '^active'; then
-                echo "rsync.service is active."
+                echo "[RISK] rsync.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -790,7 +794,7 @@ audit_and_remediate_snmp() {
         if systemctl is-enabled snmpd.service 2>/dev/null | grep -q 'enabled'; then
             echo "snmpd.service is enabled."
             if systemctl is-active snmpd.service 2>/dev/null | grep -q '^active'; then
-                echo "snmpd.service is active."
+                echo "[RISK] snmpd.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -813,7 +817,7 @@ audit_and_remediate_tftp() {
         if systemctl is-enabled tftpd-hpa.service 2>/dev/null | grep -q 'enabled'; then
             echo "tftpd-hpa.service is enabled."
             if systemctl is-active tftpd-hpa.service 2>/dev/null | grep -q '^active'; then
-                echo "tftpd-hpa.service is active."
+                echo "[RISK] tftpd-hpa.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -835,7 +839,7 @@ audit_and_remediate_web_proxy() {
         if systemctl is-enabled squid.service 2>/dev/null | grep -q 'enabled'; then
             echo "squid.service is enabled."
             if systemctl is-active squid.service 2>/dev/null | grep -q '^active'; then
-                echo "squid.service is active."
+                echo "[RISK] squid.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -858,7 +862,7 @@ audit_and_remediate_web_server() {
         if systemctl is-enabled apache2.service 2>/dev/null | grep -q 'enabled'; then
             echo "apache2.service is enabled."
             if systemctl is-active apache2.service 2>/dev/null | grep -q '^active'; then
-                echo "apache2.service is active."
+                echo "[RISK] apache2.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -876,7 +880,7 @@ audit_and_remediate_web_server() {
         if systemctl is-enabled nginx.service 2>/dev/null | grep -q 'enabled'; then
             echo "nginx.service is enabled."
             if systemctl is-active nginx.service 2>/dev/null | grep -q '^active'; then
-                echo "nginx.service is active."
+                echo "[RISK] nginx.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -899,7 +903,7 @@ audit_and_remediate_xinetd() {
         if systemctl is-enabled xinetd.service 2>/dev/null | grep -q 'enabled'; then
             echo "xinetd.service is enabled."
             if systemctl is-active xinetd.service 2>/dev/null | grep -q '^active'; then
-                echo "xinetd.service is active."
+                echo "[RISK] xinetd.service is active."
                 # Remediation
                 read -p "Remediate to this problem ? (Y/N)" answer
                 if [ "$answer" = "Y" ]; then
@@ -919,7 +923,7 @@ audit_and_remediate_x_window() {
     answer="null"
     # Audit
     if dpkg-query -s xserver-common &>/dev/null; then
-        echo "xserver-common is installed. This is a potential security risk."
+        echo "[RISK] xserver-common is installed. This is a potential security risk."
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
