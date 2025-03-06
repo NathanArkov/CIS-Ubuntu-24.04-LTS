@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 {
+# Define color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
 a_output=() a_output2=() a_output3=() l_dl="" l_mod_name="freevxfs"
 l_mod_type="fs"
 l_mod_path="$(readlink -f /lib/modules/**/kernel/$l_mod_type | sort -u)"
@@ -37,15 +42,15 @@ l_mod_chk_name="$l_mod_name"
 [ "$l_dl" != "y" ] && f_module_chk
 else
 a_output+=(" - kernel module: \"$l_mod_name\" doesn't exist in
-\"$l_mod_base_directory\"")
+"$l_mod_base_directory"")
 fi
 done
 [ "${#a_output3[@]}" -gt 0 ] && printf '%s\n' "" " -- INFO --" " - module:
 \"$l_mod_name\" exists in:" "${a_output3[@]}"
 if [ "${#a_output2[@]}" -le 0 ]; then
-printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+printf '%s\n' "" "- Audit Result:" " ${GREEN}** PASS **${NC}" "${a_output[@]}"
 else
-printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for
+printf '%s\n' "" "- Audit Result:" " ${RED}** FAIL **${NC}" " - Reason(s) for
 audit failure:" "${a_output2[@]}"
 [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:"
 "${a_output[@]}"
