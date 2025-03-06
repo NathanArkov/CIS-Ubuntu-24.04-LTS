@@ -2,4 +2,4 @@
 
 systemctl unmask tmp.mount;
 
-echo "please check the configuration of your /etc/fstab file"
+echo "\033[0;31m please check the configuration of your /etc/fstab file"
