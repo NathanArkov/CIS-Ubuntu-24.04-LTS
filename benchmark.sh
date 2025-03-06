@@ -962,8 +962,389 @@ audit_and_remediate_ssh() {
     fi
 }
 
+audit_and_remediate_mta() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    a_output=(); a_output2=(); a_port_list=("25" "465" "587")
+    for l_port_number in "${a_port_list[@]}"; do
+        if ss -plntu | grep -P -- ':'"$l_port_number"'\b' | grep -Pvq -- '\h+(127\.0\.0\.1|\[?::1\]?):'"$l_port_number"'\b'; then
+            a_output2+=(" - Port \"$l_port_number\" is listening on a non-loopback network interface")
+        else
+            a_output+=(" - Port \"$l_port_number\" is not listening on a non-loopback network interface")
+        fi
+    done
+    if command -v postconf &> /dev/null; then
+        l_interfaces="$(postconf -n inet_interfaces)"
+    elif command -v exim &> /dev/null; then
+        l_interfaces="$(exim -bP local_interfaces)"
+    elif command -v sendmail &> /dev/null; then
+        l_interfaces="$(grep -i "0 DaemonPortOptions=" /etc/mail/sendmail.cr | grep -oP '(?<=Addr=)[^,+]+')"
+    fi
+    if [ -n "$l_interfaces" ]; then
+        if grep -Pqi '\ball\b' <<< "$l_interfaces"; then
+            a_output2+=(" - MTA is bound to all network interfaces")
+        elif ! grep -Pqi '(inet_interfaces\h*=\h*)?(0\.0\.0\.0|::1|loopback-only)' <<< "$l_interfaces"; then
+            a_output2+=(" - MTA is bound to a network interface \"$l_interfaces\"")
+        else
+            a_output+=(" - MTA is not bound to a non loopback network interface \"$l_interfaces\"")
+        fi
+    else
+        a_output+=(" - MTA not detected or in use")
+    fi
+    if [ "${#a_output2[@]}" -le 0 ]; then
+        print_success "MTA is not listening on any non-loopback network interface."
+    else
+        echo -e "[RISK] \e[31mMTA is listening on a non-loopback network interface.\e[0m"
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer
+        if [ "$answer" = "Y" ]; then
+            if command -v postconf &> /dev/null; then
+                sed -i '/^inet_interfaces/ s/=.*/= loopback-only/' /etc/postfix/main.cf
+                systemctl restart postfix
+                print_success "Postfix configuration updated and service restarted."
+            else
+                echo -e "[RISK] \e[31mManual remediation required for non-Postfix MTA.\e[0m"
+            fi
+        fi
+    fi
+}
 
+audit_and_remediate_nis_2() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if dpkg-query -s nis &>/dev/null; then
+        echo -e "[RISK] \e[31mnis is installed.\e[0m"  # utiliser echo -e "[RISK]" pour afficher un message en ROUGE pour signaler la vulnérabilité à l'utilisateur
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            apt purge nis -y
+            print_success "nis has been uninstalled."   # remédiation
+        fi
+    else
+        print_success "nis is not installed."  # utiliser la fonction print_success pour afficher un message disant que la vulnérabilité n'est pas vulnérable
+    fi
+}
 
+audit_and_remediate_rsh_client() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if dpkg-query -s rsh-client &>/dev/null; then
+        echo -e "[RISK] \e[31mrsh-client is installed.\e[0m"  # utiliser echo -e "[RISK]" pour afficher un message en ROUGE pour signaler la vulnérabilité à l'utilisateur
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            apt purge rsh-client -y
+            print_success "rsh-client has been uninstalled."   # remédiation
+        fi
+    else
+        print_success "rsh-client is not installed."  # utiliser la fonction print_success pour afficher un message disant que la vulnérabilité n'est pas vulnérable
+    fi
+}
+
+audit_and_remediate_talk() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if dpkg-query -s talk &>/dev/null; then
+        echo -e "[RISK] \e[31mtalk is installed.\e[0m"  # utiliser echo -e "[RISK]" pour afficher un message en ROUGE pour signaler la vulnérabilité à l'utilisateur
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            apt purge talk -y
+            print_success "talk has been uninstalled."   # remédiation
+        fi
+    else
+        print_success "talk is not installed."  # utiliser la fonction print_success pour afficher un message disant que la vulnérabilité n'est pas vulnérable
+    fi
+}
+
+audit_and_remediate_telnet() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if dpkg-query -l | grep -E 'telnet|inetutils-telnet' &>/dev/null; then
+        echo -e "[RISK] \e[31mtelnet or inetutils-telnet is installed.\e[0m"  # utiliser echo -e "[RISK]" pour afficher un message en ROUGE pour signaler la vulnérabilité à l'utilisateur
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            apt purge telnet -y
+            apt purge inetutils-telnet -y
+            print_success "telnet and inetutils-telnet have been uninstalled."   # remédiation
+        fi
+    else
+        print_success "telnet and inetutils-telnet are not installed."  # utiliser la fonction print_success pour afficher un message disant que la vulnérabilité n'est pas vulnérable
+    fi
+}
+
+audit_and_remediate_ldap_utils() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if dpkg-query -s ldap-utils &>/dev/null; then
+        echo -e "[RISK] \e[31mldap-utils is installed.\e[0m"  # utiliser echo -e "[RISK]" pour afficher un message en ROUGE pour signaler la vulnérabilité à l'utilisateur
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            apt purge ldap-utils -y
+            print_success "ldap-utils has been uninstalled."   # remédiation
+        fi
+    else
+        print_success "ldap-utils is not installed."  # utiliser la fonction print_success pour afficher un message disant que la vulnérabilité n'est pas vulnérable
+    fi
+}
+
+audit_and_remediate_ftp() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if dpkg-query -l | grep -E 'ftp|tnftp' &>/dev/null; then
+        echo -e "[RISK] \e[31mftp or tnftp is installed.\e[0m"  # utiliser echo -e "[RISK]" pour afficher un message en ROUGE pour signaler la vulnérabilité à l'utilisateur
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            apt purge ftp -y
+            apt purge tnftp -y
+            print_success "ftp and tnftp have been uninstalled."   # remédiation
+        fi
+    else
+        print_success "ftp and tnftp are not installed."  # utiliser la fonction print_success pour afficher un message disant que la vulnérabilité n'est pas vulnérable
+    fi
+}
+
+audit_and_remediate_time_sync() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    l_output="" l_output2=""
+    service_not_enabled_chk() {
+        l_out2=""
+        if systemctl is-enabled "$l_service_name" 2>/dev/null | grep -q 'enabled'; then
+            l_out2="$l_out2\n - Daemon: \"$l_service_name\" is enabled on the system"
+        fi
+        if systemctl is-active "$l_service_name" 2>/dev/null | grep -q '^active'; then
+            l_out2="$l_out2\n - Daemon: \"$l_service_name\" is active on the system"
+        fi
+    }
+    l_service_name="systemd-timesyncd.service" # Check systemd-timesyncd daemon
+    service_not_enabled_chk
+    if [ -n "$l_out2" ]; then
+        l_timesyncd="y"
+        l_out_tsd="$l_out2"
+    else
+        l_timesyncd="n"
+        l_out_tsd="\n - Daemon: \"$l_service_name\" is not enabled and not active on the system"
+    fi
+    l_service_name="chrony.service" # Check chrony
+    service_not_enabled_chk
+    if [ -n "$l_out2" ]; then
+        l_chrony="y"
+        l_out_chrony="$l_out2"
+    else
+        l_chrony="n"
+        l_out_chrony="\n - Daemon: \"$l_service_name\" is not enabled and not active on the system"
+    fi
+    l_status="$l_timesyncd$l_chrony"
+    case "$l_status" in
+        yy)
+            l_output2=" - More than one time sync daemon is in use on the system$l_out_tsd$l_out_chrony"
+            ;;
+        nn)
+            l_output2=" - No time sync daemon is in use on the system$l_out_tsd$l_out_chrony"
+            ;;
+        yn|ny)
+            l_output=" - Only one time sync daemon is in use on the system$l_out_tsd$l_out_chrony"
+            ;;
+        *)
+            l_output2=" - Unable to determine time sync daemon(s) status"
+            ;;
+    esac
+    if [ -z "$l_output2" ]; then
+        print_success "Only one time sync daemon is in use on the system."
+    else
+        echo -e "[RISK] \e[31m$l_output2\e[0m"
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer
+        if [ "$answer" = "Y" ]; then
+            apt purge chrony -y
+            apt autoremove chrony -y
+            print_success "chrony has been uninstalled. Please configure systemd-timesyncd."
+        fi
+    fi
+}
+
+audit_and_remediate_ntp() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    a_output=(); a_output2=(); a_parlist=("NTP=[^#\n\r]+" "FallbackNTP=[^#\n\r]+")
+    l_systemd_config_file="/etc/systemd/timesyncd.conf" # Main systemd configuration file
+    f_config_file_parameter_chk() {
+        unset A_out; declare -A A_out # Check config file(s) setting
+        while read -r l_out; do
+            if [ -n "$l_out" ]; then
+                if [[ $l_out =~ ^\s*# ]]; then
+                    l_file="${l_out//# /}"
+                else
+                    l_systemd_parameter="$(awk -F= '{print $1}' <<< "$l_out" | xargs)"
+                    grep -Piq -- "^\h*$l_systemd_parameter_name\b" <<< "$l_systemd_parameter" &&
+                    A_out+=(["$l_systemd_parameter"]="$l_file")
+                fi
+            fi
+        done < <("$l_systemdanalyze" cat-config "$l_systemd_config_file" | grep -Pio '^\h*([^#\n\r]+|#\h*\/[^#\n\r\h]+\.conf\b)')
+        if (( ${#A_out[@]} > 0 )); then # Assess output from files and generate output
+            while IFS="=" read -r l_systemd_file_parameter_name l_systemd_file_parameter_value; do
+                l_systemd_file_parameter_name="${l_systemd_file_parameter_name// /}"
+                l_systemd_file_parameter_value="${l_systemd_file_parameter_value// /}"
+                if grep -Piq "\b$l_systemd_parameter_value\b" <<< "$l_systemd_file_parameter_value"; then
+                    a_output+=(" - \"$l_systemd_parameter_name\" is correctly set to \"$l_systemd_file_parameter_value\" in \"$(printf '%s' "${A_out[@]}")\"")
+                else
+                    a_output2+=(" - \"$l_systemd_parameter_name\" is incorrectly set to \"$l_systemd_file_parameter_value\" in \"$(printf '%s' "${A_out[@]}")\" and should have a value matching: \"$l_value_out\"")
+                fi
+            done < <(grep -Pio -- "^\h*$l_systemd_parameter_name\h*=\h*\H+" "${A_out[@]}")
+        else
+            a_output2+=(" - \"$l_systemd_parameter_name\" is not set in an included file *** Note: \"$l_systemd_parameter_name\" May be set in a file that's ignored by load procedure ***")
+        fi
+    }
+    l_systemdanalyze="$(readlink -f /bin/systemd-analyze)"
+    while IFS="=" read -r l_systemd_parameter_name l_systemd_parameter_value; do # Assess and check parameters
+        l_systemd_parameter_name="${l_systemd_parameter_name// /}"
+        l_systemd_parameter_value="${l_systemd_parameter_value// /}"
+        l_value_out="${l_systemd_parameter_value//-/ through }"; l_value_out="${l_value_out//|/ or }"
+        l_value_out="$(tr -d '(){}' <<< "$l_value_out")"
+        f_config_file_parameter_chk
+    done < <(printf '%s\n' "${a_parlist[@]}")
+    if [ "${#a_output2[@]}" -le 0 ]; then
+        print_success "NTP and FallbackNTP are correctly set to local site approved authoritative time server(s)."
+    else
+        echo -e "[RISK] \e[31m${a_output2[@]}\e[0m"
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer
+        if [ "$answer" = "Y" ]; then
+            a_settings=("NTP=time.nist.gov" "FallbackNTP=time-a-g.nist.gov time-b-g.nist.gov time-c-g.nist.gov")
+            [ ! -d /etc/systemd/timesyncd.conf.d/ ] && mkdir /etc/systemd/timesyncd.conf.d/
+            if grep -Psq -- '^\h*\[Time\]' /etc/systemd/timesyncd.conf.d/60-timesyncd.conf; then
+                printf '%s\n' "" "${a_settings[@]}" >> /etc/systemd/timesyncd.conf.d/60-timesyncd.conf
+            else
+                printf '%s\n' "" "[Time]" "${a_settings[@]}" >> /etc/systemd/timesyncd.conf.d/60-timesyncd.conf
+            fi
+            systemctl reload-or-restart systemd-journald
+            print_success "NTP and FallbackNTP parameters have been updated to local site approved authoritative time server(s)."
+        fi
+    fi
+}
+
+audit_and_remediate_systemd_timesyncd() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if systemctl is-enabled systemd-timesyncd.service &>/dev/null && systemctl is-active systemd-timesyncd.service &>/dev/null; then
+        print_success "systemd-timesyncd.service is enabled and active."
+    else
+        echo -e "[RISK] \e[31msystemd-timesyncd.service is not enabled or not active.\e[0m"
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            systemctl unmask systemd-timesyncd.service
+            systemctl --now enable systemd-timesyncd.service
+            print_success "systemd-timesyncd.service has been unmasked, enabled, and started."
+        fi
+    fi
+}
+
+audit_and_remediate_cron() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if systemctl list-unit-files | awk '$1~/^crond?\.service/{print $2}' | grep -q 'enabled' && systemctl list-units | awk '$1~/^crond?\.service/{print $3}' | grep -q 'active'; then
+        print_success "cron service is enabled and active."
+    else
+        echo -e "[RISK] \e[31mcron service is not enabled or not active.\e[0m"
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            systemctl unmask "$(systemctl list-unit-files | awk '$1~/^crond?\.service/{print $1}')"
+            systemctl --now enable "$(systemctl list-unit-files | awk '$1~/^crond?\.service/{print $1}')"
+            print_success "cron service has been unmasked, enabled, and started."
+        fi
+    fi
+}
+
+audit_and_remediate_crontab() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if stat -Lc 'Access: (%a/%A) Uid: ( %u/ %U) Gid: ( %g/ %G)' /etc/crontab | grep -q 'Access: (600/-rw-------) Uid: ( 0/ root) Gid: ( 0/ root)'; then
+        print_success "/etc/crontab has correct permissions and ownership."
+    else
+        echo -e "[RISK] \e[31m/etc/crontab does not have correct permissions or ownership.\e[0m"
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            chown root:root /etc/crontab
+            chmod og-rwx /etc/crontab
+            print_success "/etc/crontab ownership and permissions have been corrected."
+        fi
+    fi
+}
+
+audit_and_remediate_cron_hourly() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if stat -Lc 'Access: (%a/%A) Uid: ( %u/ %U) Gid: ( %g/ %G)' /etc/cron.hourly/ | grep -q 'Access: (700/drwx------) Uid: ( 0/ root) Gid: ( 0/ root)'; then
+        print_success "/etc/cron.hourly has correct permissions and ownership."
+    else
+        echo -e "[RISK] \e[31m/etc/cron.hourly does not have correct permissions or ownership.\e[0m"
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            chown root:root /etc/cron.hourly/
+            chmod og-rwx /etc/cron.hourly/
+            print_success "/etc/cron.hourly ownership and permissions have been corrected."
+        fi
+    fi
+}
+
+audit_and_remediate_cron_daily() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if stat -Lc 'Access: (%a/%A) Uid: ( %u/ %U) Gid: ( %g/ %G)' /etc/cron.daily/ | grep -q 'Access: (700/drwx------) Uid: ( 0/ root) Gid: ( 0/ root)'; then
+        print_success "/etc/cron.daily has correct permissions and ownership."
+    else
+        echo -e "[RISK] \e[31m/etc/cron.daily does not have correct permissions or ownership.\e[0m"
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            chown root:root /etc/cron.daily/
+            chmod og-rwx /etc/cron.daily/
+            print_success "/etc/cron.daily ownership and permissions have been corrected."
+        fi
+    fi
+}
+
+audit_and_remediate_cron_weekly() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if stat -Lc 'Access: (%a/%A) Uid: ( %u/ %U) Gid: ( %g/ %G)' /etc/cron.weekly/ | grep -q 'Access: (700/drwx------) Uid: ( 0/ root) Gid: ( 0/ root)'; then
+        print_success "/etc/cron.weekly has correct permissions and ownership."
+    else
+        echo -e "[RISK] \e[31m/etc/cron.weekly does not have correct permissions or ownership.\e[0m"
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            chown root:root /etc/cron.weekly/
+            chmod og-rwx /etc/cron.weekly/
+            print_success "/etc/cron.weekly ownership and permissions have been corrected."
+        fi
+    fi
+}
+
+audit_and_remediate_cron_monthly() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    if stat -Lc 'Access: (%a/%A) Uid: ( %u/ %U) Gid: ( %g/ %G)' /etc/cron.monthly/ | grep -q 'Access: (700/drwx------) Uid: ( 0/ root) Gid: ( 0/ root)'; then
+        print_success "/etc/cron.monthly has correct permissions and ownership."
+    else
+        echo -e "[RISK] \e[31m/etc/cron.monthly does not have correct permissions or ownership.\e[0m"
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer    # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then   # si l'utilisateur entre "Y", alors 
+            chown root:root /etc/cron.monthly/
+            chmod og-rwx /etc/cron.monthly/
+            print_success "/etc/cron.monthly ownership and permissions have been corrected."
+        fi
+    fi
+}
 
 
 
@@ -1047,8 +1428,24 @@ main() {
     audit_and_remediate_xinetd
     audit_and_remediate_x_window
     audit_and_remediate_ssh
-
-    
+    audit_and_remediate_mta
+    audit_and_remediate_ntp
+    audit_and_remediate_time_sync
+    audit_and_remediate_systemd_timesyncd
+    audit_and_remediate_ldap_utils
+    audit_and_remediate_telnet
+    audit_and_remediate_talk
+    audit_and_remediate_rsh_client
+    audit_and_remediate_nis_2
+    audit_and_remediate_ntp
+    audit_and_remediate_systemd_timesyncd
+    audit_and_remediate_cron
+    audit_and_remediate_crontab
+    audit_and_remediate_cron_hourly
+    audit_and_remediate_cron_daily
+    audit_and_remediate_cron_weekly
+    audit_and_remediate_cron_monthly
+        
 
 
     
