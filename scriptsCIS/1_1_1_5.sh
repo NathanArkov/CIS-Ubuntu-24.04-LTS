@@ -5,19 +5,19 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-{
-    a_output=() a_output2=() a_output3=() l_dl="" l_mod_name="jffs2"
-    l_mod_type="fs"
-    l_mod_path="$(readlink -f /lib/modules/**/kernel/$l_mod_type | sort -u)"
+# Function to check module configuration
+check_module_config() {
+    local mod_name="$1"
+    local mod_chk_name="${mod_name//-/_}"
+    local showconfig
+    local output=()
+    local failures=()
 
-    f_module_chk() {
-        l_dl="y" a_showconfig=()
-        while IFS= read -r l_showconfig; do
-            a_showconfig+=("$l_showconfig")
-        done < <(modprobe --showconfig | grep -P -- '\b(install|blacklist)\h+'"${l_mod_chk_name//-/_}"'\b')
+    # Get module configuration
+    mapfile -t showconfig < <(modprobe --showconfig | grep -P -- '\b(install|blacklist)\h+'"${mod_chk_name}"'\b')
 
-        if ! lsmod | grep "$l_mod_chk_name" &> /dev/null; then
-            a_output+=(" - kernel module: \"$l_mod_name\" is not loaded")
+    # Check if module is loaded
+    if ! lsmod | grep "$mod_chk_name" &>
         else
             a_output2+=(" - kernel module: \"$l_mod_name\" is loaded")
         fi

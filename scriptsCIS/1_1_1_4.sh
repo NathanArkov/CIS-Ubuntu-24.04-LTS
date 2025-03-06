@@ -5,13 +5,17 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 {
-    a_output=() a_output2=() a_output3=() l_dl="" l_mod_name="hfsplus"
+    a_output=() 
+    a_output2=() 
+    a_output3=() 
+    l_dl="" 
+    l_mod_name="hfsplus"
     l_mod_type="fs"
     l_mod_path="$(readlink -f /lib/modules/**/kernel/$l_mod_type | sort -u)"
 
-    f_module_chk()
-    {
-        l_dl="y" a_showconfig=()
+    f_module_chk() {
+        l_dl="y" 
+        a_showconfig=()
         while IFS= read -r l_showconfig; do
             a_showconfig+=("$l_showconfig")
         done < <(modprobe --showconfig | grep -P -- '\b(install|blacklist)\h+'"${l_mod_chk_name//-/_}"'\b')
@@ -40,14 +44,15 @@ NC='\033[0m' # No Color
             a_output3+=(" - \"$l_mod_base_directory\"")
             l_mod_chk_name="$l_mod_name"
             [[ "$l_mod_name" =~ overlay ]] && l_mod_chk_name="${l_mod_name::-2}"
-            [ "$l_dl" != "y" ] &&
-\"$l_mod_name\" exists in:" "${a_output3[@]}"
-if [ "${#a_output2[@]}" -le 0 ]; then
-printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
-else
-printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for
-audit failure:" "${a_output2[@]}"
-[ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:"
-"${a_output[@]}"
-fi
+            [ "$l_dl" != "y" ] && f_module_chk
+        fi
+    done
+
+    echo "Module \"$l_mod_name\" exists in:" "${a_output3[@]}"
+    if [ "${#a_output2[@]}" -le 0 ]; then
+        printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+    else
+        printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+        [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:" "${a_output[@]}"
+    fi
 }
