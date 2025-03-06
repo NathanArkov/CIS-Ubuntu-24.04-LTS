@@ -935,7 +935,25 @@ audit_and_remediate_x_window() {
     fi
 }
 
-
+audit_and_remediate_ssh() {
+    answer="null"  # mettre la variable answer à "null"
+    # Audit
+    clientaliveinterval=$(sshd -T | grep -Pi 'clientaliveinterval' | awk '{print $2}')
+    clientalivecountmax=$(sshd -T | grep -Pi 'clientalivecountmax' | awk '{print $2}')
+    
+    if [ "$clientaliveinterval" -gt 0 ] && [ "$clientalivecountmax" -gt 0 ]; then
+        print_success "ClientAliveInterval and ClientAliveCountMax are correctly configured."  # utiliser la fonction print_success pour afficher un message disant que la vulnérabilité n'est pas présente
+    else
+        echo -e "[RISK] \e[31mClientAliveInterval and/or ClientAliveCountMax are NOT correctly configured.\e[0m"  # utiliser echo -e "[RISK]" pour afficher un message en ROUGE pour signaler la vulnérabilité à l'utilisateur
+        # Remediation
+        read -p "Remediate to this problem ? (Y/N)" answer  # on laisse le choix à l'utilisateur de remédier à la vulnérabilité ou non
+        if [ "$answer" = "Y" ]; then  # si l'utilisateur entre "Y", alors
+            echo "ClientAliveInterval 15" >> /etc/ssh/sshd_config
+            echo "ClientAliveCountMax 3" >> /etc/ssh/sshd_config
+            print_success "ClientAliveInterval and ClientAliveCountMax have been set in /etc/ssh/sshd_config."  # remédiation
+        fi
+    fi
+}
 
 
 
@@ -1021,6 +1039,7 @@ main() {
     audit_and_remediate_web_server
     audit_and_remediate_xinetd
     audit_and_remediate_x_window
+    audit_and_remediate_ssh
 
     
 
