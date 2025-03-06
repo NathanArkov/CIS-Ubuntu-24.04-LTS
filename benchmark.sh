@@ -84,10 +84,10 @@ check_filesystem_option() {
             sed -i "/$mount_point/d" /etc/fstab
             echo "$device $mount_point $fstype defaults,$options,$option 0 0" | tee -a /etc/fstab
             mount -o remount "$mount_point"
-            echo "Option $option has been set on $mount_point."
+            print_success "Option $option has been set on $mount_point."
         fi
     else
-        echo "Option $option is already set on $mount_point."
+        print_success "Option $option is already set on $mount_point."
     fi
 }
 
@@ -95,13 +95,13 @@ audit_remediate_var_log_audit_partition() {
     answer="null"
     # Audit
     if findmnt -kn /var/log/audit &>/dev/null; then
-        echo "/var/log/audit is mounted on a separate partition."
+        print_success "/var/log/audit is mounted on a separate partition."
     else
         echo -e "[RISK] \e[31m/var/log/audit is NOT mounted on a separate partition.\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
-            echo "Please manually create a separate partition for /var/log/audit and update /etc/fstab."
+            print_success "Please manually create a separate partition for /var/log/audit and update /etc/fstab."
         fi
     fi
 }
@@ -110,13 +110,13 @@ audit_remediate_var_log_partition() {
     answer="null"
     # Audit
     if findmnt -kn /var/log &>/dev/null; then
-        echo "/var/log is mounted on a separate partition."
+        print_success "/var/log is mounted on a separate partition."
     else
         echo -e "[RISK] \e[31m/var/log is NOT mounted on a separate partition.\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
-            echo "Please manually create a separate partition for /var/log and update /etc/fstab."
+            print_success "Please manually create a separate partition for /var/log and update /etc/fstab."
         fi
     fi
 }
@@ -125,13 +125,13 @@ audit_remediate_var_tmp_partition() {
     answer="null"
     # Audit
     if findmnt -kn /var/tmp &>/dev/null; then
-        echo "/var/tmp is mounted on a separate partition."
+        print_success "/var/tmp is mounted on a separate partition."
     else
         echo -e "[RISK] \e[31m/var/tmp is NOT mounted on a separate partition.\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
-            echo "Please manually create a separate partition for /var/tmp and update /etc/fstab."
+            print_success "Please manually create a separate partition for /var/tmp and update /etc/fstab."
         fi
     fi
 }
@@ -140,13 +140,13 @@ audit_remediate_gpg_keys() {
     answer="null"
     # Audit
     if apt-key list &>/dev/null; then
-        echo "GPG keys are configured."
+        print_success "GPG keys are configured."
     else
         echo -e "[RISK] \e[31mGPG keys are NOT configured.\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
-            echo "Please manually configure GPG keys for your package manager."
+            print_success "Please manually configure GPG keys for your package manager."
         fi
     fi
 }
@@ -155,13 +155,13 @@ audit_remediate_package_repositories() {
     answer="null"
     # Audit
     if apt-cache policy &>/dev/null; then
-        echo "Package manager repositories are configured."
+        print_success "Package manager repositories are configured."
     else
         echo -e "[RISK] \e[31mPackage manager repositories are NOT configured.\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
-            echo "Please manually configure package manager repositories."
+            print_success "Please manually configure package manager repositories."
         fi
     fi
 }
@@ -170,14 +170,14 @@ audit_remediate_updates() {
     answer="null"
     # Audit
     if apt update && apt -s upgrade &>/dev/null; then
-        echo "System is up to date."
+        print_success "System is up to date."
     else
         echo -e "[RISK] \e[31mSystem is NOT up to date.\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
             apt update && apt upgrade -y
-            echo "System has been updated."
+            print_success "System has been updated."
         fi
     fi
 }
@@ -186,14 +186,14 @@ audit_remediate_apparmor_installed() {
     answer="null"
     # Audit
     if dpkg-query -s apparmor &>/dev/null; then
-        echo "AppArmor is installed."
+        print_success "AppArmor is installed."
     else
         echo -e "[RISK] \e[31mAppArmor is NOT installed.\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
             apt install apparmor -y
-            echo "AppArmor has been installed."
+            print_success "AppArmor has been installed."
         fi
     fi
 }
@@ -202,7 +202,7 @@ audit_remediate_apparmor_bootloader() {
     answer="null"
     # Audit
     if grep -q "apparmor=1" /boot/grub/grub.cfg; then
-        echo "AppArmor is enabled in the bootloader configuration."
+        print_success "AppArmor is enabled in the bootloader configuration."
     else
         echo -e "[RISK] \e[31mAppArmor is NOT enabled in the bootloader configuration.\e[0m"
         # Remediation
@@ -210,7 +210,7 @@ audit_remediate_apparmor_bootloader() {
         if [ "$answer" = "Y" ]; then
             sed -i '/GRUB_CMDLINE_LINUX=/s/\"/&apparmor=1 /' /etc/default/grub
             update-grub
-            echo "AppArmor has been enabled in the bootloader configuration."
+            print_success "AppArmor has been enabled in the bootloader configuration."
         fi
     fi
 }
@@ -219,14 +219,14 @@ audit_remediate_apparmor_profiles() {
     answer="null"
     # Audit
     if apparmor_status | grep -q "enforce\\|complain"; then
-        echo "All AppArmor profiles are in enforce or complain mode."
+        print_success "All AppArmor profiles are in enforce or complain mode."
     else
         echo -e "[RISK] \e[31mNot all AppArmor profiles are in enforce or complain mode.\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
             aa-enforce /etc/apparmor.d/*
-            echo "AppArmor profiles have been set to enforce mode."
+            print_success "AppArmor profiles have been set to enforce mode."
         fi
     fi
 }
@@ -235,14 +235,14 @@ audit_remediate_apparmor_enforce() {
     answer="null"
     # Audit
     if apparmor_status | grep -q "enforce"; then
-        echo "All AppArmor profiles are enforcing."
+        print_success "All AppArmor profiles are enforcing."
     else
         echo -e "[RISK] \e[31mNot all AppArmor profiles are enforcing.\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
             aa-enforce /etc/apparmor.d/*
-            echo "AppArmor profiles have been set to enforce mode."
+            print_success "AppArmor profiles have been set to enforce mode."
         fi
     fi
 }
@@ -250,13 +250,13 @@ audit_remediate_bootloader_password() {
     answer="null"
     # Audit
     if grep -q "^set superusers" /boot/grub/grub.cfg; then
-        echo "Bootloader password is set."
+        print_success "Bootloader password is set."
     else
         echo -e "[RISK] \e[31mBootloader password is NOT set.\e[0m"
         # Remediation
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
-            echo "Please manually set a bootloader password."
+            print_success "Please manually set a bootloader password."
         fi
     fi
 }
@@ -265,7 +265,7 @@ audit_remediate_bootloader_config() {
     answer="null"
     # Audit
     if stat -Lc "%a" /boot/grub/grub.cfg | grep -q "600"; then
-        echo "Bootloader config access is configured correctly."
+        print_success "Bootloader config access is configured correctly."
     else
         echo -e "[RISK] \e[31mBootloader config access is NOT configured correctly.\e[0m"
         # Remediation
@@ -273,7 +273,7 @@ audit_remediate_bootloader_config() {
         if [ "$answer" = "Y" ]; then
             chown root:root /boot/grub/grub.cfg
             chmod 600 /boot/grub/grub.cfg
-            echo "Bootloader config access has been configured."
+            print_success "Bootloader config access has been configured."
         fi
     fi
 }
@@ -282,7 +282,7 @@ audit_remediate_aslr() {
     answer="null"
     # Audit
     if sysctl kernel.randomize_va_space | grep -q "2"; then
-        echo "Address space layout randomization (ASLR) is enabled."
+        print_success "Address space layout randomization (ASLR) is enabled."
     else
         echo -e "[RISK] \e[31mAddress space layout randomization (ASLR) is NOT enabled.\e[0m"
         # Remediation
@@ -290,7 +290,7 @@ audit_remediate_aslr() {
         if [ "$answer" = "Y" ]; then
             echo "kernel.randomize_va_space = 2" >> /etc/sysctl.conf
             sysctl -w kernel.randomize_va_space=2
-            echo "ASLR has been enabled."
+            print_success "ASLR has been enabled."
         fi
     fi
 }
@@ -299,7 +299,7 @@ audit_remediate_ptrace_scope() {
     answer="null"
     # Audit
     if sysctl kernel.yama.ptrace_scope | grep -q "[1-3]"; then
-        echo "ptrace_scope is restricted."
+        print_success "ptrace_scope is restricted."
     else
         echo -e "[RISK] \e[31mptrace_scope is NOT restricted.\e[0m"
         # Remediation
@@ -307,7 +307,7 @@ audit_remediate_ptrace_scope() {
         if [ "$answer" = "Y" ]; then
             echo "kernel.yama.ptrace_scope = 1" >> /etc/sysctl.conf
             sysctl -w kernel.yama.ptrace_scope=1
-            echo "ptrace_scope has been restricted."
+            print_success "ptrace_scope has been restricted."
         fi
     fi
 }
@@ -316,7 +316,7 @@ audit_remediate_core_dumps() {
     answer="null"
     # Audit
     if grep -q "hard core 0" /etc/security/limits.conf && sysctl fs.suid_dumpable | grep -q "0"; then
-        echo "Core dumps are restricted."
+        print_success "Core dumps are restricted."
     else
         echo -e "[RISK] \e[31mCore dumps are NOT restricted.\e[0m"
         # Remediation
@@ -325,7 +325,7 @@ audit_remediate_core_dumps() {
             echo "* hard core 0" >> /etc/security/limits.conf
             echo "fs.suid_dumpable = 0" >> /etc/sysctl.conf
             sysctl -w fs.suid_dumpable=0
-            echo "Core dumps have been restricted."
+            print_success "Core dumps have been restricted."
         fi
     fi
 }
@@ -343,7 +343,7 @@ ensure_prelink_not_installed() {
             echo -e "\e[31mPrelink has been uninstalled and binaries restored to normal.\e[0m"
         fi
     else
-        echo "prelink is not installed"
+        print_success "prelink is not installed"
     fi
 }
 
@@ -359,7 +359,7 @@ ensure_motd_configured_properly() {
             echo -e "\e[31mMessage of the day has been configured properly.\e[0m"
         fi
     else
-        echo "Message of the day is configured properly"
+        print_success "Message of the day is configured properly"
     fi
 }
 
@@ -375,7 +375,7 @@ ensure_remote_login_warning_banner_configured_properly() {
             echo -e "\e[31mRemote login warning banner has been configured properly.\e[0m"
         fi
     else
-        echo "Remote login warning banner is configured properly"
+        print_success "Remote login warning banner is configured properly"
     fi
 }
 
@@ -391,7 +391,7 @@ ensure_local_login_warning_banner_configured_properly() {
             echo -e "\e[31mLocal login warning banner has been configured properly.\e[0m"
         fi
     else
-        echo "Local login warning banner is configured properly"
+        print_success "Local login warning banner is configured properly"
     fi
 }
 
@@ -401,7 +401,7 @@ audit_and_remediate_gdm_automount() {
     automount=$(gsettings get org.gnome.desktop.media-handling automount)
     automount_open=$(gsettings get org.gnome.desktop.media-handling automount-open)
     if [ "$automount" = "false" ] && [ "$automount_open" = "false" ]; then
-        echo "GDM automatic mounting of removable media is already disabled."
+        print_success "GDM automatic mounting of removable media is already disabled."
     else
         echo -e "[RISK] \e[31mGDM automatic mounting of removable media is enabled.\e[0m"
         # Remediation
@@ -419,7 +419,7 @@ audit_and_remediate_gdm_automount_lock() {
     # Audit
     if grep -Psrilq "^\h*automount\h*=\h*false\b" /etc/dconf/db/local.d/locks/* && \
        grep -Psrilq "^\h*automount-open\h*=\h*false\b" /etc/dconf/db/local.d/locks/*; then
-        echo "GDM automatic mounting of removable media is locked and set to false."
+        print_success "GDM automatic mounting of removable media is locked and set to false."
     else
         echo -e "[RISK] \e[31mGDM automatic mounting of removable media is not locked.\e[0m"
         # Remediation
@@ -437,7 +437,7 @@ audit_and_remediate_gdm_autorun_never() {
     # Audit
     autorun_never=$(gsettings get org.gnome.desktop.media-handling autorun-never)
     if [ "$autorun_never" = "true" ]; then
-        echo "GDM autorun-never is already enabled."
+        print_success "GDM autorun-never is already enabled."
     else
         echo -e "[RISK] \e[31mGDM autorun-never is not enabled.\e[0m"
         # Remediation
@@ -461,7 +461,7 @@ audit_and_remediate_xdmcp() {
             echo -e "\e[31mXDMCP has been disabled. Please restart the system for changes to take effect.\e[0m"
         fi
     else
-        echo "XDMCP is not enabled."
+        print_success "XDMCP is not enabled."
     fi
 }
 
@@ -484,7 +484,7 @@ audit_and_remediate_autofs() {
             fi
         fi
     else
-        echo "autofs is not installed."
+        print_success "autofs is not installed."
     fi
 }
 
@@ -507,7 +507,7 @@ audit_and_remediate_avahi() {
             fi
         fi
     else
-        echo "avahi-daemon is not installed."
+        print_success "avahi-daemon is not installed."
     fi
 }
 
@@ -530,7 +530,7 @@ audit_and_remediate_dhcp() {
             fi
         fi
     else
-        echo "isc-dhcp-server is not installed."
+        print_success "isc-dhcp-server is not installed."
     fi
 }
 
@@ -553,7 +553,7 @@ audit_and_remediate_dns() {
             fi
         fi
     else
-        echo "bind9 is not installed."
+        print_success "bind9 is not installed."
     fi
 }
 
@@ -576,7 +576,7 @@ audit_and_remediate_dnsmasq() {
             fi
         fi
     else
-        echo "dnsmasq is not installed."
+        print_success "dnsmasq is not installed."
     fi
 }
 
@@ -599,7 +599,7 @@ audit_and_remediate_ftp() {
             fi
         fi
     else
-        echo "vsftpd is not installed."
+        print_success "vsftpd is not installed."
     fi
 }
 
@@ -622,7 +622,7 @@ audit_and_remediate_ldap() {
             fi
         fi
     else
-        echo "slapd is not installed."
+        print_success "slapd is not installed."
     fi
 }
 audit_and_remediate_message_access() {
@@ -644,7 +644,7 @@ audit_and_remediate_message_access() {
             fi
         fi
     else
-        echo "dovecot-imapd is not installed."
+        print_success "dovecot-imapd is not installed."
     fi
 }
 
@@ -667,7 +667,7 @@ audit_and_remediate_nfs() {
             fi
         fi
     else
-        echo "nfs-kernel-server is not installed."
+        print_success "nfs-kernel-server is not installed."
     fi
 }
 
@@ -690,7 +690,7 @@ audit_and_remediate_nis() {
             fi
         fi
     else
-        echo "ypserv is not installed."
+        print_success "ypserv is not installed."
     fi
 }
 
@@ -713,7 +713,7 @@ audit_and_remediate_print_server() {
             fi
         fi
     else
-        echo "cups is not installed."
+        print_success "cups is not installed."
     fi
 }
 
@@ -736,7 +736,7 @@ audit_and_remediate_rpcbind() {
             fi
         fi
     else
-        echo "rpcbind is not installed."
+        print_success "rpcbind is not installed."
     fi
 }
 
@@ -759,7 +759,7 @@ audit_and_remediate_samba() {
             fi
         fi
     else
-        echo "samba is not installed."
+        print_success "samba is not installed."
     fi
 }
 
@@ -782,7 +782,7 @@ audit_and_remediate_rsync() {
             fi
         fi
     else
-        echo "rsync is not installed."
+        print_success "rsync is not installed."
     fi
 }
 
@@ -805,7 +805,7 @@ audit_and_remediate_snmp() {
             fi
         fi
     else
-        echo "snmpd is not installed."
+        print_success "snmpd is not installed."
     fi
 }
 
@@ -828,7 +828,7 @@ audit_and_remediate_tftp() {
             fi
         fi
     else
-        echo "tftpd-hpa is not installed."
+        print_success "tftpd-hpa is not installed."
     fi
 }
 audit_and_remediate_web_proxy() {
@@ -850,7 +850,7 @@ audit_and_remediate_web_proxy() {
             fi
         fi
     else
-        echo "squid is not installed."
+        print_success "squid is not installed."
     fi
 }
 
@@ -873,7 +873,7 @@ audit_and_remediate_web_server() {
             fi
         fi
     else
-        echo "apache2 is not installed."
+        print_success "apache2 is not installed."
     fi
     if dpkg-query -s nginx &>/dev/null; then
         echo "nginx is installed."
@@ -891,7 +891,7 @@ audit_and_remediate_web_server() {
             fi
         fi
     else
-        echo "nginx is not installed."
+        print_success "nginx is not installed."
     fi
 }
 
@@ -914,7 +914,7 @@ audit_and_remediate_xinetd() {
             fi
         fi
     else
-        echo "xinetd is not installed."
+        print_success "xinetd is not installed."
     fi
 }
 
@@ -931,7 +931,7 @@ audit_and_remediate_x_window() {
         echo -e "\e[31mxserver-common has been removed.\e[0m"
         fi
     else
-        echo "xserver-common is not installed."
+        print_success "xserver-common is not installed."
     fi
 }
 
