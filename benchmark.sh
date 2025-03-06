@@ -37,10 +37,10 @@ check_kernel_module() {
         if [ "$answer" = "Y" ]; then
             modprobe -r "$module_name" 2>/dev/null
             rmmod "$module_name" 2>/dev/null
-            echo "Kernel module $module_name has been unloaded."
+            print_success "Kernel module $module_name has been unloaded."
         fi
     else
-        echo "Kernel module $module_name is not loaded."
+        print_success "Kernel module $module_name is not loaded."
     fi
     # Check if the module is blacklisted
     if ! grep -q "blacklist $module_name" /etc/modprobe.d/*.conf; then
@@ -49,10 +49,10 @@ check_kernel_module() {
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
             echo "blacklist $module_name" | tee -a /etc/modprobe.d/disable-unused.conf
-            echo "Kernel module $module_name has been blacklisted."
+            print_success "Kernel module $module_name has been blacklisted."
         fi
     else
-        echo "Kernel module $module_name is already blacklisted."
+        print_success "Kernel module $module_name is already blacklisted."
     fi
     # Check if the module is set to not load
     if ! grep -q "install $module_name /bin/false" /etc/modprobe.d/*.conf; then
@@ -61,10 +61,10 @@ check_kernel_module() {
         read -p "Remediate to this problem ? (Y/N)" answer
         if [ "$answer" = "Y" ]; then
             echo "install $module_name /bin/false" | tee -a /etc/modprobe.d/disable-unused.conf
-            echo "Kernel module $module_name has been set to not load."
+            print_success "Kernel module $module_name has been set to not load."
         fi
     else
-        echo "Kernel module $module_name is already set to not load."
+        print_success "Kernel module $module_name is already set to not load."
     fi
 }
 
