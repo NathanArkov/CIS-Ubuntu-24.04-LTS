@@ -937,6 +937,13 @@ audit_and_remediate_x_window() {
 
 audit_and_remediate_ssh() {
     answer="null"  # mettre la variable answer à "null"
+    
+    # Vérifier si sshd est installé
+    if ! command -v sshd &> /dev/null; then
+       print_success "sshd is not installed."
+        return 1
+    fi
+
     # Audit
     clientaliveinterval=$(sshd -T | grep -Pi 'clientaliveinterval' | awk '{print $2}')
     clientalivecountmax=$(sshd -T | grep -Pi 'clientalivecountmax' | awk '{print $2}')
