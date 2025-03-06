@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# Define colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
 {
     a_output=()
     a_output2=()
@@ -50,9 +55,9 @@
     [ "${#a_output3[@]}" -gt 0 ] && printf '%s\n' "" " -- INFO --" " - module: \"$l_mod_name\" exists in:" "${a_output3[@]}"
 
     if [ "${#a_output2[@]}" -le 0 ]; then
-        printf '%s\n' "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
+        printf "${GREEN}%s\n${NC}" "" "- Audit Result:" " ** PASS **" "${a_output[@]}"
     else
-        printf '%s\n' "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
+        printf "${RED}%s\n${NC}" "" "- Audit Result:" " ** FAIL **" " - Reason(s) for audit failure:" "${a_output2[@]}"
         [ "${#a_output[@]}" -gt 0 ] && printf '%s\n' "- Correctly set:" "${a_output[@]}"
     fi
 }
