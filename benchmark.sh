@@ -5,6 +5,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+answer="null"
 
 # Function to display section headers
 print_header() {
@@ -25,7 +26,7 @@ print_error() {
 
 # Function to check and remediate kernel modules
 check_kernel_module() {
-    $answer = "null"
+    answer="null"
     local module_name=$1
     local module_type=$2
     # Audit
@@ -68,7 +69,7 @@ check_kernel_module() {
 }
 
 check_filesystem_option() {
-    $answer = "null"
+    answer="null"
     local mount_point=$1
     local option=$2
     # Audit
@@ -91,7 +92,7 @@ check_filesystem_option() {
 }
 
 audit_remediate_var_log_audit_partition() {
-    $answer = "null"
+    answer="null"
     # Audit
     if findmnt -kn /var/log/audit &>/dev/null; then
         echo "/var/log/audit is mounted on a separate partition."
@@ -106,7 +107,7 @@ audit_remediate_var_log_audit_partition() {
 }
 
 audit_remediate_var_log_partition() {
-    $answer = "null"
+    answer="null"
     # Audit
     if findmnt -kn /var/log &>/dev/null; then
         echo "/var/log is mounted on a separate partition."
@@ -121,7 +122,7 @@ audit_remediate_var_log_partition() {
 }
 
 audit_remediate_var_tmp_partition() {
-    $answer = "null"
+    answer="null"
     # Audit
     if findmnt -kn /var/tmp &>/dev/null; then
         echo "/var/tmp is mounted on a separate partition."
@@ -136,7 +137,7 @@ audit_remediate_var_tmp_partition() {
 }
 
 audit_remediate_gpg_keys() {
-    $answer = "null"
+    answer="null"
     # Audit
     if apt-key list &>/dev/null; then
         echo "GPG keys are configured."
@@ -151,7 +152,7 @@ audit_remediate_gpg_keys() {
 }
 
 audit_remediate_package_repositories() {
-    $answer = "null"
+    answer="null"
     # Audit
     if apt-cache policy &>/dev/null; then
         echo "Package manager repositories are configured."
@@ -166,7 +167,7 @@ audit_remediate_package_repositories() {
 }
 
 audit_remediate_updates() {
-    $answer = "null"
+    answer="null"
     # Audit
     if apt update && apt -s upgrade &>/dev/null; then
         echo "System is up to date."
@@ -182,7 +183,7 @@ audit_remediate_updates() {
 }
 
 audit_remediate_apparmor_installed() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s apparmor &>/dev/null; then
         echo "AppArmor is installed."
@@ -198,7 +199,7 @@ audit_remediate_apparmor_installed() {
 }
 
 audit_remediate_apparmor_bootloader() {
-    $answer = "null"
+    answer="null"
     # Audit
     if grep -q "apparmor=1" /boot/grub/grub.cfg; then
         echo "AppArmor is enabled in the bootloader configuration."
@@ -215,7 +216,7 @@ audit_remediate_apparmor_bootloader() {
 }
 
 audit_remediate_apparmor_profiles() {
-    $answer = "null"
+    answer="null"
     # Audit
     if apparmor_status | grep -q "enforce\\|complain"; then
         echo "All AppArmor profiles are in enforce or complain mode."
@@ -231,7 +232,7 @@ audit_remediate_apparmor_profiles() {
 }
 
 audit_remediate_apparmor_enforce() {
-    $answer = "null"
+    answer="null"
     # Audit
     if apparmor_status | grep -q "enforce"; then
         echo "All AppArmor profiles are enforcing."
@@ -246,7 +247,7 @@ audit_remediate_apparmor_enforce() {
     fi
 }
 audit_remediate_bootloader_password() {
-    $answer = "null"
+    answer="null"
     # Audit
     if grep -q "^set superusers" /boot/grub/grub.cfg; then
         echo "Bootloader password is set."
@@ -261,7 +262,7 @@ audit_remediate_bootloader_password() {
 }
 
 audit_remediate_bootloader_config() {
-    $answer = "null"
+    answer="null"
     # Audit
     if stat -Lc "%a" /boot/grub/grub.cfg | grep -q "600"; then
         echo "Bootloader config access is configured correctly."
@@ -278,7 +279,7 @@ audit_remediate_bootloader_config() {
 }
 
 audit_remediate_aslr() {
-    $answer = "null"
+    answer="null"
     # Audit
     if sysctl kernel.randomize_va_space | grep -q "2"; then
         echo "Address space layout randomization (ASLR) is enabled."
@@ -295,7 +296,7 @@ audit_remediate_aslr() {
 }
 
 audit_remediate_ptrace_scope() {
-    $answer = "null"
+    answer="null"
     # Audit
     if sysctl kernel.yama.ptrace_scope | grep -q "[1-3]"; then
         echo "ptrace_scope is restricted."
@@ -312,7 +313,7 @@ audit_remediate_ptrace_scope() {
 }
 
 audit_remediate_core_dumps() {
-    $answer = "null"
+    answer="null"
     # Audit
     if grep -q "hard core 0" /etc/security/limits.conf && sysctl fs.suid_dumpable | grep -q "0"; then
         echo "Core dumps are restricted."
@@ -330,7 +331,7 @@ audit_remediate_core_dumps() {
 }
 
 ensure_prelink_not_installed() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s prelink &>/dev/null; then
         echo -e "\e[31mprelink is installed\e[0m"
@@ -347,7 +348,7 @@ ensure_prelink_not_installed() {
 }
 
 ensure_motd_configured_properly() {
-    $answer = "null"
+    answer="null"
     # Audit
     if grep -E -i '(\v|\r|\m|\s|$(grep '^ID=' /etc/os-release | cut -d= -f2 | sed -e 's/\"//g'))' /etc/motd; then
         echo -e "\e[31mMessage of the day contains OS information\e[0m"
@@ -363,7 +364,7 @@ ensure_motd_configured_properly() {
 }
 
 ensure_remote_login_warning_banner_configured_properly() {
-    $answer = "null"
+    answer="null"
     # Audit
     if grep -E -i '(\v|\r|\m|\s|$(grep '^ID=' /etc/os-release | cut -d= -f2 | sed -e 's/\"//g'))' /etc/issue.net; then
         echo -e "\e[31mRemote login warning banner contains OS information\e[0m"
@@ -379,7 +380,7 @@ ensure_remote_login_warning_banner_configured_properly() {
 }
 
 ensure_local_login_warning_banner_configured_properly() {
-    $answer = "null"
+    answer="null"
     # Audit
     if grep -E -i '(\v|\r|\m|\s|$(grep '^ID=' /etc/os-release | cut -d= -f2 | sed -e 's/\"//g'))' /etc/issue; then
         echo -e "\e[31mLocal login warning banner contains OS information\e[0m"
@@ -395,7 +396,7 @@ ensure_local_login_warning_banner_configured_properly() {
 }
 
 audit_and_remediate_gdm_automount() {
-    $answer = "null"
+    answer="null"
     # Audit
     automount=$(gsettings get org.gnome.desktop.media-handling automount)
     automount_open=$(gsettings get org.gnome.desktop.media-handling automount-open)
@@ -413,7 +414,7 @@ audit_and_remediate_gdm_automount() {
 }
 
 audit_and_remediate_gdm_automount_lock() {
-    $answer = "null"
+    answer="null"
     # Audit
     if grep -Psrilq "^\h*automount\h*=\h*false\b" /etc/dconf/db/local.d/locks/* && \
        grep -Psrilq "^\h*automount-open\h*=\h*false\b" /etc/dconf/db/local.d/locks/*; then
@@ -430,7 +431,7 @@ audit_and_remediate_gdm_automount_lock() {
     fi
 }
 audit_and_remediate_gdm_autorun_never() {
-    $answer = "null"
+    answer="null"
     # Audit
     autorun_never=$(gsettings get org.gnome.desktop.media-handling autorun-never)
     if [ "$autorun_never" = "true" ]; then
@@ -446,7 +447,7 @@ audit_and_remediate_gdm_autorun_never() {
 }
 
 audit_and_remediate_xdmcp() {
-    $answer = "null"
+    answer="null"
     # Audit
     if grep -Psil -- '^\h*\[xdmcp\]' /etc/{gdm3,gdm}/{custom,daemon}.conf | xargs -I{} awk '/\[xdmcp\]/{f=1;next}/\[/{f=0}f{if(/^\s*Enable\s*=\s*true/)print "The file: \""{}"\" includes: \""$0"\" in the \"[xdmcp]\" block"}' | grep -q 'Enable=true'; then
         # Remediation
@@ -461,7 +462,7 @@ audit_and_remediate_xdmcp() {
 }
 
 audit_and_remediate_autofs() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s autofs &>/dev/null; then
         echo "autofs is installed."
@@ -484,7 +485,7 @@ audit_and_remediate_autofs() {
 }
 
 audit_and_remediate_avahi() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s avahi-daemon &>/dev/null; then
         echo "avahi-daemon is installed."
@@ -507,7 +508,7 @@ audit_and_remediate_avahi() {
 }
 
 audit_and_remediate_dhcp() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s isc-dhcp-server &>/dev/null; then
         echo "isc-dhcp-server is installed."
@@ -530,7 +531,7 @@ audit_and_remediate_dhcp() {
 }
 
 audit_and_remediate_dns() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s bind9 &>/dev/null; then
         echo "bind9 is installed."
@@ -553,7 +554,7 @@ audit_and_remediate_dns() {
 }
 
 audit_and_remediate_dnsmasq() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s dnsmasq &>/dev/null; then
         echo "dnsmasq is installed."
@@ -576,7 +577,7 @@ audit_and_remediate_dnsmasq() {
 }
 
 audit_and_remediate_ftp() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s vsftpd &>/dev/null; then
         echo "vsftpd is installed."
@@ -599,7 +600,7 @@ audit_and_remediate_ftp() {
 }
 
 audit_and_remediate_ldap() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s slapd &>/dev/null; then
         echo "slapd is installed."
@@ -621,7 +622,7 @@ audit_and_remediate_ldap() {
     fi
 }
 audit_and_remediate_message_access() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s dovecot-imapd &>/dev/null; then
         echo "dovecot-imapd is installed."
@@ -644,7 +645,7 @@ audit_and_remediate_message_access() {
 }
 
 audit_and_remediate_nfs() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s nfs-kernel-server &>/dev/null; then
         echo "nfs-kernel-server is installed."
@@ -667,7 +668,7 @@ audit_and_remediate_nfs() {
 }
 
 audit_and_remediate_nis() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s ypserv &>/dev/null; then
         echo "ypserv is installed."
@@ -690,7 +691,7 @@ audit_and_remediate_nis() {
 }
 
 audit_and_remediate_print_server() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s cups &>/dev/null; then
         echo "cups is installed."
@@ -713,7 +714,7 @@ audit_and_remediate_print_server() {
 }
 
 audit_and_remediate_rpcbind() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s rpcbind &>/dev/null; then
         echo "rpcbind is installed."
@@ -736,7 +737,7 @@ audit_and_remediate_rpcbind() {
 }
 
 audit_and_remediate_samba() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s samba &>/dev/null; then
         echo "samba is installed."
@@ -759,7 +760,7 @@ audit_and_remediate_samba() {
 }
 
 audit_and_remediate_rsync() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s rsync &>/dev/null; then
         echo "rsync is installed."
@@ -782,7 +783,7 @@ audit_and_remediate_rsync() {
 }
 
 audit_and_remediate_snmp() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s snmpd &>/dev/null; then
         echo "snmpd is installed."
@@ -805,7 +806,7 @@ audit_and_remediate_snmp() {
 }
 
 audit_and_remediate_tftp() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s tftpd-hpa &>/dev/null; then
         echo "tftpd-hpa is installed."
@@ -827,7 +828,7 @@ audit_and_remediate_tftp() {
     fi
 }
 audit_and_remediate_web_proxy() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s squid &>/dev/null; then
         echo "squid is installed."
@@ -850,7 +851,7 @@ audit_and_remediate_web_proxy() {
 }
 
 audit_and_remediate_web_server() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s apache2 &>/dev/null; then
         echo "apache2 is installed."
@@ -891,7 +892,7 @@ audit_and_remediate_web_server() {
 }
 
 audit_and_remediate_xinetd() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s xinetd &>/dev/null; then
         echo "xinetd is installed."
@@ -915,7 +916,7 @@ audit_and_remediate_xinetd() {
 
 
 audit_and_remediate_x_window() {
-    $answer = "null"
+    answer="null"
     # Audit
     if dpkg-query -s xserver-common &>/dev/null; then
         echo "xserver-common is installed. This is a potential security risk."
