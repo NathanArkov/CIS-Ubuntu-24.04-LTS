@@ -455,9 +455,9 @@ main() {
     check_job_schedulers
 
     print_header "3 Network Configuration"
-    check_network_devices
-    check_network_kernel_modules
-    check_network_kernel_parameters
+    sudo check_network_devices
+    sudo check_network_kernel_modules
+    sudo check_network_kernel_parameters
 
 }
 
