@@ -245,12 +245,201 @@ check_client_services() {
     done
 }
 
+# 2.3 Configure Time Synchronization
+check_time_synchronization() {
+    print_header "2.3 Configure Time Synchronization"
+
+    # Ensure chrony is not running
+    if systemctl is-active --quiet chrony; then
+        print_error "chrony is running"
+    else
+        print_success "chrony is not running"
+    fi
+
+    # Ensure systemd-timesyncd is configured with authorized timeserver
+    if grep -q "NTP=" /etc/systemd/timesyncd.conf; then
+        print_success "systemd-timesyncd is configured with authorized timeserver"
+    else
+        print_error "systemd-timesyncd is not configured with authorized timeserver"
+    fi
+
+    # Ensure systemd-timesyncd is enabled and running
+    if systemctl is-enabled --quiet systemd-timesyncd && systemctl is-active --quiet systemd-timesyncd; then
+        print_success "systemd-timesyncd is enabled and running"
+    else
+        print_error "systemd-timesyncd is not enabled and running"
+    fi
+}
+
+# 2.4 Job Schedulers
+check_job_schedulers() {
+    print_header "2.4 Job Schedulers"
+
+    # Ensure cron daemon is enabled and active
+    if systemctl is-enabled --quiet cron && systemctl is-active --quiet cron; then
+        print_success "cron daemon is enabled and active"
+    else
+        print_error "cron daemon is not enabled and active"
+    fi
+
+    # Ensure permissions on cron files and directories are configured
+    cron_files=("/etc/crontab" "/etc/cron.hourly" "/etc/cron.daily" "/etc/cron.weekly" "/etc/cron.monthly" "/etc/cron.d")
+    for file in "${cron_files[@]}"; do
+        if [ -e "$file" ]; then
+            if stat -c "%a" "$file" | grep -qE "^[0-7]00$"; then
+                print_success "Permissions on $file are configured"
+            else
+                print_error "Permissions on $file are not configured"
+            fi
+        else
+            print_error "$file does not exist"
+        fi
+    done
+
+    # Ensure crontab is restricted to authorized users
+    if [ -f /etc/cron.allow ]; then
+        print_success "crontab is restricted to authorized users"
+    else
+        print_error "crontab is not restricted to authorized users"
+    fi
+
+    # Ensure AT is restricted to authorized users
+    if [ -f /etc/at.allow ]; then
+        print_success "AT is restricted to authorized users"
+    else
+        print_error "AT is not restricted to authorized users"
+    fi
+}
+
+# 3.1 Configure Network Devices
+check_network_devices() {
+    print_header "3.1 Configure Network Devices"
+
+    # Ensure IPv6 status is identified
+    if sysctl -a | grep -q "net.ipv6.conf.all.disable_ipv6"; then
+        print_success "IPv6 status is identified"
+    else
+        print_error "IPv6 status is not identified"
+    fi
+
+    # Ensure wireless interfaces are disabled
+    if nmcli radio wifi | grep -q "disabled"; then
+        print_success "Wireless interfaces are disabled"
+    else
+        print_error "Wireless interfaces are not disabled"
+    fi
+
+    # Ensure Bluetooth services are not in use
+    if systemctl is-active --quiet bluetooth; then
+        print_error "Bluetooth services are in use"
+    else
+        print_success "Bluetooth services are not in use"
+    fi
+}
+
+# 3.2 Configure Network Kernel Modules
+check_network_kernel_modules() {
+    print_header "3.2 Configure Network Kernel Modules"
+
+    modules=("dccp" "tipc" "rds" "sctp")
+    for module in "${modules[@]}"; do
+        if lsmod | grep -q "$module"; then
+            print_error "$module kernel module is available"
+        else
+            print_success "$module kernel module is not available"
+        fi
+    done
+}
+
+# 3.3 Configure Network Kernel Parameters
+check_network_kernel_parameters() {
+    print_header "3.3 Configure Network Kernel Parameters"
+
+    # Ensure IP forwarding is disabled
+    if sysctl net.ipv4.ip_forward | grep -q "0"; then
+        print_success "IP forwarding is disabled"
+    else
+        print_error "IP forwarding is not disabled"
+    fi
+
+    # Ensure packet redirect sending is disabled
+    if sysctl net.ipv4.conf.all.send_redirects | grep -q "0"; then
+        print_success "Packet redirect sending is disabled"
+    else
+        print_error "Packet redirect sending is not disabled"
+    fi
+
+    # Ensure bogus ICMP responses are ignored
+    if sysctl net.ipv4.icmp_ignore_bogus_error_responses | grep -q "1"; then
+        print_success "Bogus ICMP responses are ignored"
+    else
+        print_error "Bogus ICMP responses are not ignored"
+    fi
+
+    # Ensure broadcast ICMP requests are ignored
+    if sysctl net.ipv4.icmp_echo_ignore_broadcasts | grep -q "1"; then
+        print_success "Broadcast ICMP requests are ignored"
+    else
+        print_error "Broadcast ICMP requests are not ignored"
+    fi
+
+    # Ensure ICMP redirects are not accepted
+    if sysctl net.ipv4.conf.all.accept_redirects | grep -q "0"; then
+        print_success "ICMP redirects are not accepted"
+    else
+        print_error "ICMP redirects are accepted"
+    fi
+
+    # Ensure secure ICMP redirects are not accepted
+    if sysctl net.ipv4.conf.all.secure_redirects | grep -q "0"; then
+        print_success "Secure ICMP redirects are not accepted"
+    else
+        print_error "Secure ICMP redirects are accepted"
+    fi
+
+    # Ensure reverse path filtering is enabled
+    if sysctl net.ipv4.conf.all.rp_filter | grep -q "1"; then
+        print_success "Reverse path filtering is enabled"
+    else
+        print_error "Reverse path filtering is not enabled"
+    fi
+
+    # Ensure source routed packets are not accepted
+    if sysctl net.ipv4.conf.all.accept_source_route | grep -q "0"; then
+        print_success "Source routed packets are not accepted"
+    else
+        print_error "Source routed packets are accepted"
+    fi
+
+    # Ensure suspicious packets are logged
+    if sysctl net.ipv4.conf.all.log_martians | grep -q "1"; then
+        print_success "Suspicious packets are logged"
+    else
+        print_error "Suspicious packets are not logged"
+    fi
+
+    # Ensure TCP SYN cookies are enabled
+    if sysctl net.ipv4.tcp_syncookies | grep -q "1"; then
+        print_success "TCP SYN cookies are enabled"
+    else
+        print_error "TCP SYN cookies are not enabled"
+    fi
+
+    # Ensure IPv6 router advertisements are not accepted
+    if sysctl net.ipv6.conf.all.accept_ra | grep -q "0"; then
+        print_success "IPv6 router advertisements are not accepted"
+    else
+        print_error "IPv6 router advertisements are accepted"
+    fi
+}
+
 main() {
     echo "============================="
     echo "======= CIS Benchmark ======="
     echo "====== Ubuntu 24.04 LTS ====="
     echo "============================="
 
+    print_header "1 Initial Setup"
     check_filesystem_kernel_modules
     check_ptrace_scope
     check_core_dumps
@@ -258,8 +447,18 @@ main() {
     check_error_reporting
     check_warning_banners
     check_gnome_display_manager
+
+    print_header "2 Services"
     check_server_services
     check_client_services
+    check_time_synchronization
+    check_job_schedulers
+
+    print_header "3 Network Configuration"
+    check_network_devices
+    check_network_kernel_modules
+    check_network_kernel_parameters
+
 }
 
 main
