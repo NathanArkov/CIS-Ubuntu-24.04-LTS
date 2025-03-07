@@ -1895,10 +1895,19 @@ main() {
         ufw)
             check_ufw_configuration
             ;;
+        iptables|nftables)
+            check_iptables_configuration
+            check_nftables_configuration
+            ;;
+        iptables|ufw)
+            check_iptables_configuration
+            check_ufw_configuration
+            ;;
+        nftables|ufw)
+            check_nftables_configuration
+            check_ufw_configuration
+            ;;
     esac
-    # check_ufw_configuration
-    # check_nftables_configuration
-    # check_iptables_configuration
 
     print_header "5 Secure Shell"
     check_ssh_server
