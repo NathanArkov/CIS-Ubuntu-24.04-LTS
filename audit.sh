@@ -844,6 +844,1010 @@ check_ssh_server() {
     fi
 }
 
+# 5.2 Configure Privilege Escalation
+check_privilege_escalation() {
+    print_header "5.2 Configure Privilege Escalation"
+
+    # 5.2.1 Ensure sudo is installed
+    if dpkg -l | grep -q sudo; then
+        print_success "sudo is installed"
+    else
+        print_error "sudo is not installed"
+    fi
+
+    # 5.2.2 Ensure sudo commands use pty
+    if grep -q "Defaults use_pty" /etc/sudoers; then
+        print_success "sudo commands use pty"
+    else
+        print_error "sudo commands do not use pty"
+    fi
+
+    # 5.2.3 Ensure sudo log file exists
+    if grep -q "Defaults logfile=" /etc/sudoers; then
+        print_success "sudo log file exists"
+    else
+        print_error "sudo log file does not exist"
+    fi
+
+    # 5.2.4 Ensure users must provide password for privilege escalation
+    if grep -q "Defaults !authenticate" /etc/sudoers; then
+        print_error "Users are not required to provide password for privilege escalation"
+    else
+        print_success "Users must provide password for privilege escalation"
+    fi
+
+    # 5.2.5 Ensure re-authentication for privilege escalation is not disabled globally
+    if grep -q "Defaults timestamp_timeout=" /etc/sudoers; then
+        print_error "Re-authentication for privilege escalation is disabled globally"
+    else
+        print_success "Re-authentication for privilege escalation is not disabled globally"
+    fi
+
+    # 5.2.6 Ensure sudo authentication timeout is configured correctly
+    if grep -q "Defaults timestamp_timeout=" /etc/sudoers; then
+        print_success "sudo authentication timeout is configured correctly"
+    else
+        print_error "sudo authentication timeout is not configured correctly"
+    fi
+
+    # 5.2.7 Ensure access to the su command is restricted
+    if grep -q "auth required pam_wheel.so" /etc/pam.d/su; then
+        print_success "Access to the su command is restricted"
+    else
+        print_error "Access to the su command is not restricted"
+    fi
+}
+
+# 5.3 Configure PAM
+check_pam_configuration() {
+    print_header "5.3 Configure PAM"
+
+    # 5.3.1.1 Ensure latest version of pam is installed
+    if dpkg -l | grep -q "libpam0g"; then
+        print_success "Latest version of pam is installed"
+    else
+        print_error "Latest version of pam is not installed"
+    fi
+
+    # 5.3.1.2 Ensure libpam-modules is installed
+    if dpkg -l | grep -q "libpam-modules"; then
+        print_success "libpam-modules is installed"
+    else
+        print_error "libpam-modules is not installed"
+    fi
+
+    # 5.3.1.3 Ensure libpam-pwquality is installed
+    if dpkg -l | grep -q "libpam-pwquality"; then
+        print_success "libpam-pwquality is installed"
+    else
+        print_error "libpam-pwquality is not installed"
+    fi
+
+    # 5.3.2.1 Ensure pam_unix module is enabled
+    if grep -q "pam_unix.so" /etc/pam.d/common-auth; then
+        print_success "pam_unix module is enabled"
+    else
+        print_error "pam_unix module is not enabled"
+    fi
+
+    # 5.3.2.2 Ensure pam_faillock module is enabled
+    if grep -q "pam_faillock.so" /etc/pam.d/common-auth; then
+        print_success "pam_faillock module is enabled"
+    else
+        print_error "pam_faillock module is not enabled"
+    fi
+
+    # 5.3.2.3 Ensure pam_pwquality module is enabled
+    if grep -q "pam_pwquality.so" /etc/pam.d/common-password; then
+        print_success "pam_pwquality module is enabled"
+    else
+        print_error "pam_pwquality module is not enabled"
+    fi
+
+    # 5.3.2.4 Ensure pam_pwhistory module is enabled
+    if grep -q "pam_pwhistory.so" /etc/pam.d/common-password; then
+        print_success "pam_pwhistory module is enabled"
+    else
+        print_error "pam_pwhistory module is not enabled"
+    fi
+}
+
+# 5.3.3 Configure PAM Arguments
+check_pam_arguments() {
+    print_header "5.3.3 Configure PAM Arguments"
+
+    # 5.3.3.1 Configure pam_faillock module
+    # 5.3.3.1.1 Ensure password failed attempts lockout is configured
+    if grep -q "auth required pam_faillock.so" /etc/pam.d/common-auth; then
+        print_success "Password failed attempts lockout is configured"
+    else
+        print_error "Password failed attempts lockout is not configured"
+    fi
+
+    # 5.3.3.1.2 Ensure password unlock time is configured
+    if grep -q "unlock_time=" /etc/security/faillock.conf; then
+        print_success "Password unlock time is configured"
+    else
+        print_error "Password unlock time is not configured"
+    fi
+
+    # 5.3.3.1.3 Ensure password failed attempts lockout includes root account
+    if grep -q "even_deny_root" /etc/security/faillock.conf; then
+        print_success "Password failed attempts lockout includes root account"
+    else
+        print_error "Password failed attempts lockout does not include root account"
+    fi
+
+    # 5.3.3.2 Configure pam_pwquality module
+    # 5.3.3.2.1 Ensure password number of changed characters is configured
+    if grep -q "difok=" /etc/security/pwquality.conf; then
+        print_success "Password number of changed characters is configured"
+    else
+        print_error "Password number of changed characters is not configured"
+    fi
+
+    # 5.3.3.2.2 Ensure minimum password length is configured
+    if grep -q "minlen=" /etc/security/pwquality.conf; then
+        print_success "Minimum password length is configured"
+    else
+        print_error "Minimum password length is not configured"
+    fi
+
+    # 5.3.3.2.3 Ensure password complexity is configured
+    if grep -q "minclass=" /etc/security/pwquality.conf; then
+        print_success "Password complexity is configured"
+    else
+        print_error "Password complexity is not configured"
+    fi
+
+    # 5.3.3.2.4 Ensure password same consecutive characters is configured
+    if grep -q "maxrepeat=" /etc/security/pwquality.conf; then
+        print_success "Password same consecutive characters is configured"
+    else
+        print_error "Password same consecutive characters is not configured"
+    fi
+
+    # 5.3.3.2.5 Ensure password maximum sequential characters is configured
+    if grep -q "maxsequence=" /etc/security/pwquality.conf; then
+        print_success "Password maximum sequential characters is configured"
+    else
+        print_error "Password maximum sequential characters is not configured"
+    fi
+
+    # 5.3.3.2.6 Ensure password dictionary check is enabled
+    if grep -q "dictcheck=" /etc/security/pwquality.conf; then
+        print_success "Password dictionary check is enabled"
+    else
+        print_error "Password dictionary check is not enabled"
+    fi
+
+    # 5.3.3.2.7 Ensure password quality checking is enforced
+    if grep -q "enforce_for_root" /etc/security/pwquality.conf; then
+        print_success "Password quality checking is enforced"
+    else
+        print_error "Password quality checking is not enforced"
+    fi
+
+    # 5.3.3.2.8 Ensure password quality is enforced for the root user
+    if grep -q "enforce_for_root" /etc/security/pwquality.conf; then
+        print_success "Password quality is enforced for the root user"
+    else
+        print_error "Password quality is not enforced for the root user"
+    fi
+
+    # 5.3.3.3 Configure pam_pwhistory module
+    # 5.3.3.3.1 Ensure password history remember is configured
+    if grep -q "remember=" /etc/security/pwhistory.conf; then
+        print_success "Password history remember is configured"
+    else
+        print_error "Password history remember is not configured"
+    fi
+
+    # 5.3.3.3.2 Ensure password history is enforced for the root user
+    if grep -q "enforce_for_root" /etc/security/pwhistory.conf; then
+        print_success "Password history is enforced for the root user"
+    else
+        print_error "Password history is not enforced for the root user"
+    fi
+
+    # 5.3.3.3.3 Ensure pam_pwhistory includes use_authtok
+    if grep -q "use_authtok" /etc/security/pwhistory.conf; then
+        print_success "pam_pwhistory includes use_authtok"
+    else
+        print_error "pam_pwhistory does not include use_authtok"
+    fi
+
+    # 5.3.3.4 Configure pam_unix module
+    # 5.3.3.4.1 Ensure pam_unix does not include nullok
+    if ! grep -q "nullok" /etc/pam.d/common-password; then
+        print_success "pam_unix does not include nullok"
+    else
+        print_error "pam_unix includes nullok"
+    fi
+
+    # 5.3.3.4.2 Ensure pam_unix does not include remember
+    if ! grep -q "remember=" /etc/pam.d/common-password; then
+        print_success "pam_unix does not include remember"
+    else
+        print_error "pam_unix includes remember"
+    fi
+
+    # 5.3.3.4.3 Ensure pam_unix includes a strong password hashing algorithm
+    if grep -q "sha512" /etc/pam.d/common-password; then
+        print_success "pam_unix includes a strong password hashing algorithm"
+    else
+        print_error "pam_unix does not include a strong password hashing algorithm"
+    fi
+
+    # 5.3.3.4.4 Ensure pam_unix includes use_authtok
+    if grep -q "use_authtok" /etc/pam.d/common-password; then
+        print_success "pam_unix includes use_authtok"
+    else
+        print_error "pam_unix does not include use_authtok"
+    fi
+}
+
+# 5.4 User Accounts and Environment
+check_user_accounts_environment() {
+    print_header "5.4 User Accounts and Environment"
+
+    # 5.4.1 Configure shadow password suite parameters
+    # 5.4.1.1 Ensure password expiration is configured
+    if grep -q "^PASS_MAX_DAYS" /etc/login.defs; then
+        print_success "Password expiration is configured"
+    else
+        print_error "Password expiration is not configured"
+    fi
+
+    # 5.4.1.2 Ensure minimum password days is configured
+    if grep -q "^PASS_MIN_DAYS" /etc/login.defs; then
+        print_success "Minimum password days is configured"
+    else
+        print_error "Minimum password days is not configured"
+    fi
+
+    # 5.4.1.3 Ensure password expiration warning days is configured
+    if grep -q "^PASS_WARN_AGE" /etc/login.defs; then
+        print_success "Password expiration warning days is configured"
+    else
+        print_error "Password expiration warning days is not configured"
+    fi
+
+    # 5.4.1.4 Ensure strong password hashing algorithm is configured
+    if grep -q "^ENCRYPT_METHOD SHA512" /etc/login.defs; then
+        print_success "Strong password hashing algorithm is configured"
+    else
+        print_error "Strong password hashing algorithm is not configured"
+    fi
+
+    # 5.4.1.5 Ensure inactive password lock is configured
+    if useradd -D | grep -q "INACTIVE"; then
+        print_success "Inactive password lock is configured"
+    else
+        print_error "Inactive password lock is not configured"
+    fi
+
+    # 5.4.1.6 Ensure all users last password change date is in the past
+    if awk -F: '$5 < 0 {print $1}' /etc/shadow | grep -q .; then
+        print_error "Some users have a last password change date in the future"
+    else
+        print_success "All users last password change date is in the past"
+    fi
+
+    # 5.4.2 Configure root and system accounts and environment
+    # 5.4.2.1 Ensure root is the only UID 0 account
+    if awk -F: '($3 == 0) {print $1}' /etc/passwd | grep -q "^root$"; then
+        print_success "Root is the only UID 0 account"
+    else
+        print_error "There are other UID 0 accounts besides root"
+    fi
+
+    # 5.4.2.2 Ensure root is the only GID 0 account
+    if awk -F: '($4 == 0) {print $1}' /etc/passwd | grep -q "^root$"; then
+        print_success "Root is the only GID 0 account"
+    else
+        print_error "There are other GID 0 accounts besides root"
+    fi
+
+    # 5.4.2.3 Ensure group root is the only GID 0 group
+    if awk -F: '($3 == 0) {print $1}' /etc/group | grep -q "^root$"; then
+        print_success "Group root is the only GID 0 group"
+    else
+        print_error "There are other GID 0 groups besides root"
+    fi
+
+    # 5.4.2.4 Ensure root account access is controlled
+    if grep -q "^auth required pam_wheel.so" /etc/pam.d/su; then
+        print_success "Root account access is controlled"
+    else
+        print_error "Root account access is not controlled"
+    fi
+
+    # 5.4.2.5 Ensure root path integrity
+    if echo "$PATH" | grep -q "::\|:/"; then
+        print_error "Root path integrity is not ensured"
+    else
+        print_success "Root path integrity is ensured"
+    fi
+
+    # 5.4.2.6 Ensure root user umask is configured
+    if grep -q "^umask" /root/.bashrc; then
+        print_success "Root user umask is configured"
+    else
+        print_error "Root user umask is not configured"
+    fi
+
+    # 5.4.2.7 Ensure system accounts do not have a valid login shell
+    if awk -F: '($7 !~ /(\/usr\/sbin\/nologin|\/bin\/false)/) {print $1}' /etc/passwd | grep -q .; then
+        print_error "Some system accounts have a valid login shell"
+    else
+        print_success "System accounts do not have a valid login shell"
+    fi
+
+    # 5.4.2.8 Ensure accounts without a valid login shell are locked
+    if awk -F: '($7 !~ /(\/usr\/sbin\/nologin|\/bin\/false)/) {print $1}' /etc/passwd | xargs -I {} passwd -S {} | grep -q " L "; then
+        print_success "Accounts without a valid login shell are locked"
+    else
+        print_error "Accounts without a valid login shell are not locked"
+    fi
+
+    # 5.4.3 Configure user default environment
+    # 5.4.3.1 Ensure nologin is not listed in /etc/shells
+    if grep -q "/usr/sbin/nologin" /etc/shells; then
+        print_error "nologin is listed in /etc/shells"
+    else
+        print_success "nologin is not listed in /etc/shells"
+    fi
+
+    # 5.4.3.2 Ensure default user shell timeout is configured
+    if grep -q "^TMOUT" /etc/profile; then
+        print_success "Default user shell timeout is configured"
+    else
+        print_error "Default user shell timeout is not configured"
+    fi
+
+    # 5.4.3.3 Ensure default user umask is configured
+    if grep -q "^umask" /etc/profile; then
+        print_success "Default user umask is configured"
+    else
+        print_error "Default user umask is not configured"
+    fi
+}
+
+# 6.1 System Logging
+check_system_logging() {
+    print_header "6.1 System Logging"
+
+    # 6.1.1 Configure systemd-journald service
+    # 6.1.1.1 Ensure journald service is enabled and active
+    if systemctl is-enabled --quiet systemd-journald && systemctl is-active --quiet systemd-journald; then
+        print_success "journald service is enabled and active"
+    else
+        print_error "journald service is not enabled and active"
+    fi
+
+    # 6.1.1.2 Ensure journald log file access is configured
+    if grep -q "^Storage=" /etc/systemd/journald.conf; then
+        print_success "journald log file access is configured"
+    else
+        print_error "journald log file access is not configured"
+    fi
+
+    # 6.1.1.3 Ensure journald log file rotation is configured
+    if grep -q "^SystemMaxUse=" /etc/systemd/journald.conf; then
+        print_success "journald log file rotation is configured"
+    else
+        print_error "journald log file rotation is not configured"
+    fi
+
+    # 6.1.1.4 Ensure only one logging system is in use
+    if systemctl is-active --quiet rsyslog || systemctl is-active --quiet syslog-ng; then
+        print_error "Multiple logging systems are in use"
+    else
+        print_success "Only one logging system is in use"
+    fi
+
+    # 6.1.2 Configure journald
+    # 6.1.2.1 Configure systemd-journal-remote
+    # 6.1.2.1.1 Ensure systemd-journal-remote is installed
+    if dpkg -l | grep -q systemd-journal-remote; then
+        print_success "systemd-journal-remote is installed"
+    else
+        print_error "systemd-journal-remote is not installed"
+    fi
+
+    # 6.1.2.1.2 Ensure systemd-journal-upload authentication is configured
+    if grep -q "^UploadKey=" /etc/systemd/journal-upload.conf; then
+        print_success "systemd-journal-upload authentication is configured"
+    else
+        print_error "systemd-journal-upload authentication is not configured"
+    fi
+
+    # 6.1.2.1.3 Ensure systemd-journal-upload is enabled and active
+    if systemctl is-enabled --quiet systemd-journal-upload && systemctl is-active --quiet systemd-journal-upload; then
+        print_success "systemd-journal-upload is enabled and active"
+    else
+        print_error "systemd-journal-upload is not enabled and active"
+    fi
+
+    # 6.1.2.1.4 Ensure systemd-journal-remote service is not in use
+    if systemctl is-active --quiet systemd-journal-remote; then
+        print_error "systemd-journal-remote service is in use"
+    else
+        print_success "systemd-journal-remote service is not in use"
+    fi
+
+    # 6.1.2.2 Ensure journald ForwardToSyslog is disabled
+    if grep -q "^ForwardToSyslog=no" /etc/systemd/journald.conf; then
+        print_success "journald ForwardToSyslog is disabled"
+    else
+        print_error "journald ForwardToSyslog is not disabled"
+    fi
+
+    # 6.1.2.3 Ensure journald Compress is configured
+    if grep -q "^Compress=yes" /etc/systemd/journald.conf; then
+        print_success "journald Compress is configured"
+    else
+        print_error "journald Compress is not configured"
+    fi
+
+    # 6.1.2.4 Ensure journald Storage is configured
+    if grep -q "^Storage=" /etc/systemd/journald.conf; then
+        print_success "journald Storage is configured"
+    else
+        print_error "journald Storage is not configured"
+    fi
+
+    # 6.1.3 Configure rsyslog
+    # 6.1.3.1 Ensure rsyslog is installed
+    if dpkg -l | grep -q rsyslog; then
+        print_success "rsyslog is installed"
+    else
+        print_error "rsyslog is not installed"
+    fi
+
+    # 6.1.3.2 Ensure rsyslog service is enabled and active
+    if systemctl is-enabled --quiet rsyslog && systemctl is-active --quiet rsyslog; then
+        print_success "rsyslog service is enabled and active"
+    else
+        print_error "rsyslog service is not enabled and active"
+    fi
+
+    # 6.1.3.3 Ensure journald is configured to send logs to rsyslog
+    if grep -q "^ForwardToSyslog=yes" /etc/systemd/journald.conf; then
+        print_success "journald is configured to send logs to rsyslog"
+    else
+        print_error "journald is not configured to send logs to rsyslog"
+    fi
+
+    # 6.1.3.4 Ensure rsyslog log file creation mode is configured
+    if grep -q "^$FileCreateMode" /etc/rsyslog.conf; then
+        print_success "rsyslog log file creation mode is configured"
+    else
+        print_error "rsyslog log file creation mode is not configured"
+    fi
+
+    # 6.1.3.5 Ensure rsyslog logging is configured
+    if grep -q "^*.*" /etc/rsyslog.conf; then
+        print_success "rsyslog logging is configured"
+    else
+        print_error "rsyslog logging is not configured"
+    fi
+
+    # 6.1.3.6 Ensure rsyslog is configured to send logs to a remote log host
+    if grep -q "^*.* @@remote-host" /etc/rsyslog.conf; then
+        print_success "rsyslog is configured to send logs to a remote log host"
+    else
+        print_error "rsyslog is not configured to send logs to a remote log host"
+    fi
+
+    # 6.1.3.7 Ensure rsyslog is not configured to receive logs from a remote client
+    if grep -q "^$ModLoad imtcp" /etc/rsyslog.conf; then
+        print_error "rsyslog is configured to receive logs from a remote client"
+    else
+        print_success "rsyslog is not configured to receive logs from a remote client"
+    fi
+
+    # 6.1.3.8 Ensure logrotate is configured
+    if dpkg -l | grep -q logrotate; then
+        print_success "logrotate is configured"
+    else
+        print_error "logrotate is not configured"
+    fi
+
+    # 6.1.4 Configure Logfiles
+    # 6.1.4.1 Ensure access to all logfiles has been configured
+    if find /var/log -type f -exec stat -c "%a %n" {} \; | awk '$1 != "600" {print $2}' | grep -q .; then
+        print_error "Access to some logfiles is not configured"
+    else
+        print_success "Access to all logfiles has been configured"
+    fi
+}
+
+# 6.2 System Auditing
+check_system_auditing() {
+    print_header "6.2 System Auditing"
+
+    # 6.2.1 Configure auditd Service
+    # 6.2.1.1 Ensure auditd packages are installed
+    if dpkg -l | grep -q auditd; then
+        print_success "auditd packages are installed"
+    else
+        print_error "auditd packages are not installed"
+    fi
+
+    # 6.2.1.2 Ensure auditd service is enabled and active
+    if systemctl is-enabled --quiet auditd && systemctl is-active --quiet auditd; then
+        print_success "auditd service is enabled and active"
+    else
+        print_error "auditd service is not enabled and active"
+    fi
+
+    # 6.2.1.3 Ensure auditing for processes that start prior to auditd is enabled
+    if grep -q "audit=1" /etc/default/grub; then
+        print_success "Auditing for processes that start prior to auditd is enabled"
+    else
+        print_error "Auditing for processes that start prior to auditd is not enabled"
+    fi
+
+    # 6.2.1.4 Ensure audit_backlog_limit is sufficient
+    if grep -q "audit_backlog_limit=" /etc/default/grub; then
+        print_success "audit_backlog_limit is sufficient"
+    else
+        print_error "audit_backlog_limit is not sufficient"
+    fi
+
+    # 6.2.2 Configure Data Retention
+    # 6.2.2.1 Ensure audit log storage size is configured
+    if grep -q "max_log_file =" /etc/audit/auditd.conf; then
+        print_success "Audit log storage size is configured"
+    else
+        print_error "Audit log storage size is not configured"
+    fi
+
+    # 6.2.2.2 Ensure audit logs are not automatically deleted
+    if grep -q "max_log_file_action = keep_logs" /etc/audit/auditd.conf; then
+        print_success "Audit logs are not automatically deleted"
+    else
+        print_error "Audit logs are automatically deleted"
+    fi
+
+    # 6.2.2.3 Ensure system is disabled when audit logs are full
+    if grep -q "space_left_action = email" /etc/audit/auditd.conf && grep -q "action_mail_acct = root" /etc/audit/auditd.conf && grep -q "admin_space_left_action = halt" /etc/audit/auditd.conf; then
+        print_success "System is disabled when audit logs are full"
+    else
+        print_error "System is not disabled when audit logs are full"
+    fi
+
+    # 6.2.2.4 Ensure system warns when audit logs are low on space
+    if grep -q "space_left =" /etc/audit/auditd.conf && grep -q "space_left_action = email" /etc/audit/auditd.conf; then
+        print_success "System warns when audit logs are low on space"
+    else
+        print_error "System does not warn when audit logs are low on space"
+    fi
+}
+
+# 6.2.3 Configure auditd Rules
+check_auditd_rules() {
+    print_header "6.2.3 Configure auditd Rules"
+
+    # 6.2.3.1 Ensure changes to system administration scope (sudoers) is collected
+    if auditctl -l | grep -q "/etc/sudoers"; then
+        print_success "Changes to system administration scope (sudoers) are collected"
+    else
+        print_error "Changes to system administration scope (sudoers) are not collected"
+    fi
+
+    # 6.2.3.2 Ensure actions as another user are always logged
+    if auditctl -l | grep -q "auid>=1000 -F auid!=4294967295 -k actions"; then
+        print_success "Actions as another user are always logged"
+    else
+        print_error "Actions as another user are not always logged"
+    fi
+
+    # 6.2.3.3 Ensure events that modify the sudo log file are collected
+    if auditctl -l | grep -q "/var/log/sudo.log"; then
+        print_success "Events that modify the sudo log file are collected"
+    else
+        print_error "Events that modify the sudo log file are not collected"
+    fi
+
+    # 6.2.3.4 Ensure events that modify date and time information are collected
+    if auditctl -l | grep -q "adjtimex\|settimeofday\|clock_settime"; then
+        print_success "Events that modify date and time information are collected"
+    else
+        print_error "Events that modify date and time information are not collected"
+    fi
+
+    # 6.2.3.5 Ensure events that modify the system's network environment are collected
+    if auditctl -l | grep -q "sethostname\|setdomainname"; then
+        print_success "Events that modify the system's network environment are collected"
+    else
+        print_error "Events that modify the system's network environment are not collected"
+    fi
+
+    # 6.2.3.6 Ensure use of privileged commands are collected
+    if auditctl -l | grep -q "/usr/sbin"; then
+        print_success "Use of privileged commands are collected"
+    else
+        print_error "Use of privileged commands are not collected"
+    fi
+
+    # 6.2.3.7 Ensure unsuccessful file access attempts are collected
+    if auditctl -l | grep -q "access"; then
+        print_success "Unsuccessful file access attempts are collected"
+    else
+        print_error "Unsuccessful file access attempts are not collected"
+    fi
+
+    # 6.2.3.8 Ensure events that modify user/group information are collected
+    if auditctl -l | grep -q "/etc/passwd\|/etc/group\|/etc/shadow"; then
+        print_success "Events that modify user/group information are collected"
+    else
+        print_error "Events that modify user/group information are not collected"
+    fi
+
+    # 6.2.3.9 Ensure discretionary access control permission modification events are collected
+    if auditctl -l | grep -q "chmod\|chown\|fchmod\|fchown"; then
+        print_success "Discretionary access control permission modification events are collected"
+    else
+        print_error "Discretionary access control permission modification events are not collected"
+    fi
+
+    # 6.2.3.10 Ensure successful file system mounts are collected
+    if auditctl -l | grep -q "mount"; then
+        print_success "Successful file system mounts are collected"
+    else
+        print_error "Successful file system mounts are not collected"
+    fi
+
+    # 6.2.3.11 Ensure session initiation information is collected
+    if auditctl -l | grep -q "session"; then
+        print_success "Session initiation information is collected"
+    else
+        print_error "Session initiation information is not collected"
+    fi
+
+    # 6.2.3.12 Ensure login and logout events are collected
+    if auditctl -l | grep -q "logins"; then
+        print_success "Login and logout events are collected"
+    else
+        print_error "Login and logout events are not collected"
+    fi
+
+    # 6.2.3.13 Ensure file deletion events by users are collected
+    if auditctl -l | grep -q "unlink\|unlinkat\|rename\|renameat"; then
+        print_success "File deletion events by users are collected"
+    else
+        print_error "File deletion events by users are not collected"
+    fi
+
+    # 6.2.3.14 Ensure events that modify the system's Mandatory Access Controls are collected
+    if auditctl -l | grep -q "setxattr\|fsetxattr\|lsetxattr"; then
+        print_success "Events that modify the system's Mandatory Access Controls are collected"
+    else
+        print_error "Events that modify the system's Mandatory Access Controls are not collected"
+    fi
+
+    # 6.2.3.15 Ensure successful and unsuccessful attempts to use the chcon command are collected
+    if auditctl -l | grep -q "chcon"; then
+        print_success "Successful and unsuccessful attempts to use the chcon command are collected"
+    else
+        print_error "Successful and unsuccessful attempts to use the chcon command are not collected"
+    fi
+
+    # 6.2.3.16 Ensure successful and unsuccessful attempts to use the setfacl command are collected
+    if auditctl -l | grep -q "setfacl"; then
+        print_success "Successful and unsuccessful attempts to use the setfacl command are collected"
+    else
+        print_error "Successful and unsuccessful attempts to use the setfacl command are not collected"
+    fi
+
+    # 6.2.3.17 Ensure successful and unsuccessful attempts to use the chacl command are collected
+    if auditctl -l | grep -q "chacl"; then
+        print_success "Successful and unsuccessful attempts to use the chacl command are collected"
+    else
+        print_error "Successful and unsuccessful attempts to use the chacl command are not collected"
+    fi
+
+    # 6.2.3.18 Ensure successful and unsuccessful attempts to use the usermod command are collected
+    if auditctl -l | grep -q "usermod"; then
+        print_success "Successful and unsuccessful attempts to use the usermod command are collected"
+    else
+        print_error "Successful and unsuccessful attempts to use the usermod command are not collected"
+    fi
+
+    # 6.2.3.19 Ensure kernel module loading, unloading, and modification is collected
+    if auditctl -l | grep -q "init_module\|delete_module"; then
+        print_success "Kernel module loading, unloading, and modification is collected"
+    else
+        print_error "Kernel module loading, unloading, and modification is not collected"
+    fi
+
+    # 6.2.3.20 Ensure the audit configuration is immutable
+    if auditctl -l | grep -q "^-e 2"; then
+        print_success "The audit configuration is immutable"
+    else
+        print_error "The audit configuration is not immutable"
+    fi
+
+    # 6.2.3.21 Ensure the running and on disk configuration is the same
+    if diff /etc/audit/audit.rules <(auditctl -l); then
+        print_success "The running and on disk configuration is the same"
+    else
+        print_error "The running and on disk configuration is not the same"
+    fi
+}
+
+# 6.2.4 Configure auditd File Access
+check_auditd_file_access() {
+    print_header "6.2.4 Configure auditd File Access"
+
+    # 6.2.4.1 Ensure audit log files mode is configured
+    if find /var/log/audit -type f -exec stat -c "%a %n" {} \; | awk '$1 != "600" {print $2}' | grep -q .; then
+        print_error "Audit log files mode is not configured"
+    else
+        print_success "Audit log files mode is configured"
+    fi
+
+    # 6.2.4.2 Ensure audit log files owner is configured
+    if find /var/log/audit -type f -exec stat -c "%U %n" {} \; | awk '$1 != "root" {print $2}' | grep -q .; then
+        print_error "Audit log files owner is not configured"
+    else
+        print_success "Audit log files owner is configured"
+    fi
+
+    # 6.2.4.3 Ensure audit log files group owner is configured
+    if find /var/log/audit -type f -exec stat -c "%G %n" {} \; | awk '$1 != "root" {print $2}' | grep -q .; then
+        print_error "Audit log files group owner is not configured"
+    else
+        print_success "Audit log files group owner is configured"
+    fi
+
+    # 6.2.4.4 Ensure the audit log file directory mode is configured
+    if stat -c "%a" /var/log/audit | grep -q "700"; then
+        print_success "Audit log file directory mode is configured"
+    else
+        print_error "Audit log file directory mode is not configured"
+    fi
+
+    # 6.2.4.5 Ensure audit configuration files mode is configured
+    if find /etc/audit -type f -exec stat -c "%a %n" {} \; | awk '$1 != "600" {print $2}' | grep -q .; then
+        print_error "Audit configuration files mode is not configured"
+    else
+        print_success "Audit configuration files mode is configured"
+    fi
+
+    # 6.2.4.6 Ensure audit configuration files owner is configured
+    if find /etc/audit -type f -exec stat -c "%U %n" {} \; | awk '$1 != "root" {print $2}' | grep -q .; then
+        print_error "Audit configuration files owner is not configured"
+    else
+        print_success "Audit configuration files owner is configured"
+    fi
+
+    # 6.2.4.7 Ensure audit configuration files group owner is configured
+    if find /etc/audit -type f -exec stat -c "%G %n" {} \; | awk '$1 != "root" {print $2}' | grep -q .; then
+        print_error "Audit configuration files group owner is not configured"
+    else
+        print_success "Audit configuration files group owner is configured"
+    fi
+
+    # 6.2.4.8 Ensure audit tools mode is configured
+    if find /sbin/auditctl /sbin/auditd -type f -exec stat -c "%a %n" {} \; | awk '$1 != "755" {print $2}' | grep -q .; then
+        print_error "Audit tools mode is not configured"
+    else
+        print_success "Audit tools mode is configured"
+    fi
+
+    # 6.2.4.9 Ensure audit tools owner is configured
+    if find /sbin/auditctl /sbin/auditd -type f -exec stat -c "%U %n" {} \; | awk '$1 != "root" {print $2}' | grep -q .; then
+        print_error "Audit tools owner is not configured"
+    else
+        print_success "Audit tools owner is configured"
+    fi
+
+    # 6.2.4.10 Ensure audit tools group owner is configured
+    if find /sbin/auditctl /sbin/auditd -type f -exec stat -c "%G %n" {} \; | awk '$1 != "root" {print $2}' | grep -q .; then
+        print_error "Audit tools group owner is not configured"
+    else
+        print_success "Audit tools group owner is configured"
+    fi
+}
+
+# 6.3 Configure Integrity Checking
+check_integrity_checking() {
+    print_header "6.3 Configure Integrity Checking"
+
+    # 6.3.1 Ensure AIDE is installed
+    if dpkg -l | grep -q aide; then
+        print_success "AIDE is installed"
+    else
+        print_error "AIDE is not installed"
+    fi
+
+    # 6.3.2 Ensure filesystem integrity is regularly checked
+    if crontab -l | grep -q aide; then
+        print_success "Filesystem integrity is regularly checked"
+    else
+        print_error "Filesystem integrity is not regularly checked"
+    fi
+
+    # 6.3.3 Ensure cryptographic mechanisms are used to protect the integrity of audit tools
+    if grep -q "sha512" /etc/aide/aide.conf; then
+        print_success "Cryptographic mechanisms are used to protect the integrity of audit tools"
+    else
+        print_error "Cryptographic mechanisms are not used to protect the integrity of audit tools"
+    fi
+}
+
+# 7 System Maintenance
+check_system_maintenance() {
+    print_header "7 System Maintenance"
+
+    # 7.1 System File Permissions
+    # 7.1.1 Ensure permissions on /etc/passwd are configured
+    if [ "$(stat -c %a /etc/passwd)" -eq 644 ]; then
+        print_success "Permissions on /etc/passwd are configured"
+    else
+        print_error "Permissions on /etc/passwd are not configured"
+    fi
+
+    # 7.1.2 Ensure permissions on /etc/passwd- are configured
+    if [ "$(stat -c %a /etc/passwd-)" -eq 600 ]; then
+        print_success "Permissions on /etc/passwd- are configured"
+    else
+        print_error "Permissions on /etc/passwd- are not configured"
+    fi
+
+    # 7.1.3 Ensure permissions on /etc/group are configured
+    if [ "$(stat -c %a /etc/group)" -eq 644 ]; then
+        print_success "Permissions on /etc/group are configured"
+    else
+        print_error "Permissions on /etc/group are not configured"
+    fi
+
+    # 7.1.4 Ensure permissions on /etc/group- are configured
+    if [ "$(stat -c %a /etc/group-)" -eq 600 ]; then
+        print_success "Permissions on /etc/group- are configured"
+    else
+        print_error "Permissions on /etc/group- are not configured"
+    fi
+
+    # 7.1.5 Ensure permissions on /etc/shadow are configured
+    if [ "$(stat -c %a /etc/shadow)" -eq 600 ]; then
+        print_success "Permissions on /etc/shadow are configured"
+    else
+        print_error "Permissions on /etc/shadow are not configured"
+    fi
+
+    # 7.1.6 Ensure permissions on /etc/shadow- are configured
+    if [ "$(stat -c %a /etc/shadow-)" -eq 600 ]; then
+        print_success "Permissions on /etc/shadow- are configured"
+    else
+        print_error "Permissions on /etc/shadow- are not configured"
+    fi
+
+    # 7.1.7 Ensure permissions on /etc/gshadow are configured
+    if [ "$(stat -c %a /etc/gshadow)" -eq 600 ]; then
+        print_success "Permissions on /etc/gshadow are configured"
+    else
+        print_error "Permissions on /etc/gshadow are not configured"
+    fi
+
+    # 7.1.8 Ensure permissions on /etc/gshadow- are configured
+    if [ "$(stat -c %a /etc/gshadow-)" -eq 600 ]; then
+        print_success "Permissions on /etc/gshadow- are configured"
+    else
+        print_error "Permissions on /etc/gshadow- are not configured"
+    fi
+
+    # 7.1.9 Ensure permissions on /etc/shells are configured
+    if [ "$(stat -c %a /etc/shells)" -eq 644 ]; then
+        print_success "Permissions on /etc/shells are configured"
+    else
+        print_error "Permissions on /etc/shells are not configured"
+    fi
+
+    # 7.1.10 Ensure permissions on /etc/security/opasswd are configured
+    if [ "$(stat -c %a /etc/security/opasswd)" -eq 600 ]; then
+        print_success "Permissions on /etc/security/opasswd are configured"
+    else
+        print_error "Permissions on /etc/security/opasswd are not configured"
+    fi
+
+    # 7.1.11 Ensure world writable files and directories are secured
+    if find / -xdev -type f -perm -002 -exec ls -l {} \; | grep -q .; then
+        print_error "World writable files and directories are not secured"
+    else
+        print_success "World writable files and directories are secured"
+    fi
+
+    # 7.1.12 Ensure no files or directories without an owner and a group exist
+    if find / -xdev \( -nouser -o -nogroup \) -exec ls -l {} \; | grep -q .; then
+        print_error "Files or directories without an owner and a group exist"
+    else
+        print_success "No files or directories without an owner and a group exist"
+    fi
+
+    # 7.1.13 Ensure SUID and SGID files are reviewed
+    if find / -xdev \( -perm -4000 -o -perm -2000 \) -exec ls -l {} \; | grep -q .; then
+        print_error "SUID and SGID files need to be reviewed"
+    else
+        print_success "No SUID and SGID files need to be reviewed"
+    fi
+
+    # 7.2 Local User and Group Settings
+    # 7.2.1 Ensure accounts in /etc/passwd use shadowed passwords
+    if awk -F: '($2 != "x") {print $1}' /etc/passwd | grep -q .; then
+        print_error "Some accounts in /etc/passwd do not use shadowed passwords"
+    else
+        print_success "All accounts in /etc/passwd use shadowed passwords"
+    fi
+
+    # 7.2.2 Ensure /etc/shadow password fields are not empty
+    if awk -F: '($2 == "") {print $1}' /etc/shadow | grep -q .; then
+        print_error "Some /etc/shadow password fields are empty"
+    else
+        print_success "No /etc/shadow password fields are empty"
+    fi
+
+    # 7.2.3 Ensure all groups in /etc/passwd exist in /etc/group
+    if awk -F: '{print $4}' /etc/passwd | sort -u | while read -r gid; do grep -q ":$gid:" /etc/group || echo "$gid"; done | grep -q .; then
+        print_error "Some groups in /etc/passwd do not exist in /etc/group"
+    else
+        print_success "All groups in /etc/passwd exist in /etc/group"
+    fi
+
+    # 7.2.4 Ensure shadow group is empty
+    if getent group shadow | awk -F: '{print $4}' | grep -q .; then
+        print_error "Shadow group is not empty"
+    else
+        print_success "Shadow group is empty"
+    fi
+
+    # 7.2.5 Ensure no duplicate UIDs exist
+    if awk -F: '{print $3}' /etc/passwd | sort | uniq -d | grep -q .; then
+        print_error "Duplicate UIDs exist"
+    else
+        print_success "No duplicate UIDs exist"
+    fi
+
+    # 7.2.6 Ensure no duplicate GIDs exist
+    if awk -F: '{print $3}' /etc/group | sort | uniq -d | grep -q .; then
+        print_error "Duplicate GIDs exist"
+    else
+        print_success "No duplicate GIDs exist"
+    fi
+
+    # 7.2.7 Ensure no duplicate user names exist
+    if awk -F: '{print $1}' /etc/passwd | sort | uniq -d | grep -q .; then
+        print_error "Duplicate user names exist"
+    else
+        print_success "No duplicate user names exist"
+    fi
+
+    # 7.2.8 Ensure no duplicate group names exist
+    if awk -F: '{print $1}' /etc/group | sort | uniq -d | grep -q .; then
+        print_error "Duplicate group names exist"
+    else
+        print_success "No duplicate group names exist"
+    fi
+
+    # 7.2.9 Ensure local interactive user home directories are configured
+    if awk -F: '($3 >= 1000 && $7 != "/usr/sbin/nologin" && $7 != "/bin/false") {print $6}' /etc/passwd | while read -r dir; do [ -d "$dir" ] || echo "$dir"; done | grep -q .; then
+        print_error "Some local interactive user home directories are not configured"
+    else
+        print_success "All local interactive user home directories are configured"
+    fi
+
+    # 7.2.10 Ensure local interactive user dot files access is configured
+    if awk -F: '($3 >= 1000 && $7 != "/usr/sbin/nologin" && $7 != "/bin/false") {print $6}' /etc/passwd | while read -r dir; do find "$dir" -name ".*" -perm /002 -exec ls -ld {} \; | grep -q . && echo "$dir"; done | grep -q .; then
+        print_error "Some local interactive user dot files access is not configured"
+    else
+        print_success "All local interactive user dot files access is configured"
+    fi
+}
+
 main() {
     echo "============================="
     echo "======= CIS Benchmark ======="
@@ -878,6 +1882,25 @@ main() {
 
     print_header "5 Secure Shell"
     check_ssh_server
+    check_privilege_escalation
+    check_pam_configuration
+    check_pam_arguments
+    check_user_accounts_environment
+
+    print_header "6 Logging and Auditing"
+    check_system_logging
+    check_system_auditing
+    check_auditd_rules
+    check_auditd_file_access
+    check_integrity_checking
+
+    print_header "7 System Maintenance"
+    check_system_maintenance
+
+    echo "============================="
+    print_header "End of CIS Benchmark"
+    echo "============================="
+
 
 
 }
