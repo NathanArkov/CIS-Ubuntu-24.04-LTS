@@ -1896,10 +1896,11 @@ main() {
     check_all_permissions
     check_system_maintenance
 
-    echo "============================="
+    echo "\n============================="
     print_header "End of CIS Benchmark"
-    echo "============================="
-
+    echo "\n============================="
+    print_header "Check CIS-Ubuntu-24.04-LTS.PDF file for remediation steps"
+    print_header "Github @NathanArkov"
 
 
 }
