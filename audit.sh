@@ -118,6 +118,81 @@ check_warning_banners() {
     fi
 }
 
+# 1.7 Configure Gnome Display Manager
+check_gnome_display_manager() {
+    print_header "1.7 Configure Gnome Display Manager"
+
+    # Ensure GDM is removed
+    if ! dpkg -l | grep -q gdm; then
+        print_success "GDM is removed"
+    else
+        print_error "GDM is not removed"
+    fi
+
+    # Ensure GDM login banner is configured
+    if [ -f /etc/gdm3/greeter.dconf-defaults ] && grep -q "banner-message-enable=true" /etc/gdm3/greeter.dconf-defaults; then
+        print_success "GDM login banner is configured"
+    else
+        print_error "GDM login banner is not configured"
+    fi
+
+    # Ensure GDM disable-user-list option is enabled
+    if [ -f /etc/gdm3/greeter.dconf-defaults ] && grep -q "disable-user-list=true" /etc/gdm3/greeter.dconf-defaults; then
+        print_success "GDM disable-user-list option is enabled"
+    else
+        print_error "GDM disable-user-list option is not enabled"
+    fi
+
+    # Ensure GDM screen locks when the user is idle
+    if [ -f /etc/gdm3/greeter.dconf-defaults ] && grep -q "idle-delay=uint32 300" /etc/gdm3/greeter.dconf-defaults; then
+        print_success "GDM screen locks when the user is idle"
+    else
+        print_error "GDM screen does not lock when the user is idle"
+    fi
+
+    # Ensure GDM screen locks cannot be overridden
+    if [ -f /etc/gdm3/greeter.dconf-defaults ] && grep -q "lock-delay=uint32 0" /etc/gdm3/greeter.dconf-defaults; then
+        print_success "GDM screen locks cannot be overridden"
+    else
+        print_error "GDM screen locks can be overridden"
+    fi
+
+    # Ensure GDM automatic mounting of removable media is disabled
+    if [ -f /etc/gdm3/greeter.dconf-defaults ] && grep -q "automount=false" /etc/gdm3/greeter.dconf-defaults; then
+        print_success "GDM automatic mounting of removable media is disabled"
+    else
+        print_error "GDM automatic mounting of removable media is not disabled"
+    fi
+
+    # Ensure GDM disabling automatic mounting of removable media is not overridden
+    if [ -f /etc/gdm3/greeter.dconf-defaults ] && grep -q "automount-open=false" /etc/gdm3/greeter.dconf-defaults; then
+        print_success "GDM disabling automatic mounting of removable media is not overridden"
+    else
+        print_error "GDM disabling automatic mounting of removable media is overridden"
+    fi
+
+    # Ensure GDM autorun-never is enabled
+    if [ -f /etc/gdm3/greeter.dconf-defaults ] && grep -q "autorun-never=true" /etc/gdm3/greeter.dconf-defaults; then
+        print_success "GDM autorun-never is enabled"
+    else
+        print_error "GDM autorun-never is not enabled"
+    fi
+
+    # Ensure GDM autorun-never is not overridden
+    if [ -f /etc/gdm3/greeter.dconf-defaults ] && grep -q "autorun-never=true" /etc/gdm3/greeter.dconf-defaults; then
+        print_success "GDM autorun-never is not overridden"
+    else
+        print_error "GDM autorun-never is overridden"
+    fi
+
+    # Ensure XDMCP is not enabled
+    if [ -f /etc/gdm3/custom.conf ] && grep -q "Enable=false" /etc/gdm3/custom.conf; then
+        print_success "XDMCP is not enabled"
+    else
+        print_error "XDMCP is enabled"
+    fi
+}
+
 main() {
     echo "============================="
     echo "======= CIS Benchmark ======="
@@ -130,4 +205,8 @@ main() {
     check_prelink
     check_error_reporting
     check_warning_banners
+    check_gnome_display_manager
+
 }
+
+main
