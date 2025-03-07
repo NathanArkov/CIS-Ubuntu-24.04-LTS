@@ -21,7 +21,7 @@ print_error() {
 # 1.1.1 Configure Filesystem Kernel Modules
 check_filesystem_kernel_modules() {
     print_header "1.1.1 Configure Filesystem Kernel Modules"
-    modules=("cramfs" "freevxfs" "hfs" "hfsplus" "jffs2" "overlayfs" "squashfs" "udf" "usb-storage")
+    modules=("cramfs" "freevxfs" "hfs" "hfsplus" "jffs2" "overlayfs" "squashfs" "udf" "usb-storage");
     for module in "${modules[@]}"; do
         if lsmod | grep -q "$module"; then
             # echo "Checking $module module..."
@@ -432,6 +432,411 @@ check_network_kernel_parameters() {
     fi
 }
 
+# 4.1 Single Firewall
+check_single_firewall() {
+    print_header "4.1 Single Firewall"
+
+    # Ensure a single firewall configuration utility is in use
+    if dpkg -l | grep -qE "ufw|iptables|firewalld"; then
+        firewall_count=$(dpkg -l | grep -E "ufw|iptables|firewalld" | wc -l)
+        if [ "$firewall_count" -eq 1 ]; then
+            print_success "A single firewall configuration utility is in use"
+        else
+            print_error "Multiple firewall configuration utilities are in use"
+        fi
+    else
+        print_error "No firewall configuration utility is in use"
+    fi
+}
+
+# 4.2 Configure UFW
+check_ufw_configuration() {
+    print_header "4.2 Configure UFW"
+
+    # Ensure ufw is installed
+    if dpkg -l | grep -q ufw; then
+        print_success "ufw is installed"
+    else
+        print_error "ufw is not installed"
+    fi
+
+    # Ensure iptables-persistent is not installed with ufw
+    if dpkg -l | grep -q iptables-persistent; then
+        print_error "iptables-persistent is installed with ufw"
+    else
+        print_success "iptables-persistent is not installed with ufw"
+    fi
+
+    # Ensure ufw is enabled
+    if systemctl is-enabled --quiet ufw && systemctl is-active --quiet ufw; then
+        print_success "ufw is enabled"
+    else
+        print_error "ufw is not enabled"
+    fi
+
+    # Ensure ufw loopback traffic is configured
+    if ufw status | grep -q "allow in on lo"; then
+        print_success "ufw loopback traffic is configured"
+    else
+        print_error "ufw loopback traffic is not configured"
+    fi
+
+    # Ensure ufw outbound connections are configured
+    if ufw status | grep -q "allow out"; then
+        print_success "ufw outbound connections are configured"
+    else
+        print_error "ufw outbound connections are not configured"
+    fi
+
+    # Ensure ufw firewall rules exist for all open ports
+    open_ports=$(ss -tuln | grep LISTEN | awk '{print $5}' | cut -d: -f2 | sort -u)
+    for port in $open_ports; do
+        if ufw status | grep -q "$port"; then
+            print_success "ufw firewall rule exists for port $port"
+        else
+            print_error "ufw firewall rule does not exist for port $port"
+        fi
+    done
+
+    # Ensure ufw has a default deny policy
+    if ufw status | grep -q "Default: deny (incoming)"; then
+        print_success "ufw has a default deny policy"
+    else
+        print_error "ufw does not have a default deny policy"
+    fi
+}
+
+# 4.3 Configure nftables
+check_nftables_configuration() {
+    print_header "4.3 Configure nftables"
+
+    # Ensure nftables is installed
+    if dpkg -l | grep -q nftables; then
+        print_success "nftables is installed"
+    else
+        print_error "nftables is not installed"
+    fi
+
+    # Ensure ufw is uninstalled or disabled with nftables
+    if dpkg -l | grep -q ufw; then
+        if systemctl is-active --quiet ufw; then
+            print_error "ufw is active with nftables"
+        else
+            print_success "ufw is installed but not active with nftables"
+        fi
+    else
+        print_success "ufw is not installed with nftables"
+    fi
+
+    # Ensure iptables are flushed with nftables
+    if iptables -L | grep -q "Chain"; then
+        print_error "iptables are not flushed with nftables"
+    else
+        print_success "iptables are flushed with nftables"
+    fi
+
+    # Ensure a nftables table exists
+    if nft list tables | grep -q "table"; then
+        print_success "nftables table exists"
+    else
+        print_error "nftables table does not exist"
+    fi
+
+    # Ensure nftables base chains exist
+    if nft list chains | grep -q "chain"; then
+        print_success "nftables base chains exist"
+    else
+        print_error "nftables base chains do not exist"
+    fi
+
+    # Ensure nftables loopback traffic is configured
+    if nft list ruleset | grep -q "iif lo accept"; then
+        print_success "nftables loopback traffic is configured"
+    else
+        print_error "nftables loopback traffic is not configured"
+    fi
+
+    # Ensure nftables outbound and established connections are configured
+    if nft list ruleset | grep -q "ct state established,related accept"; then
+        print_success "nftables outbound and established connections are configured"
+    else
+        print_error "nftables outbound and established connections are not configured"
+    fi
+
+    # Ensure nftables default deny firewall policy
+    if nft list ruleset | grep -q "policy drop"; then
+        print_success "nftables default deny firewall policy is configured"
+    else
+        print_error "nftables default deny firewall policy is not configured"
+    fi
+
+    # Ensure nftables service is enabled
+    if systemctl is-enabled --quiet nftables; then
+        print_success "nftables service is enabled"
+    else
+        print_error "nftables service is not enabled"
+    fi
+
+    # Ensure nftables rules are permanent
+    if nft list ruleset | grep -q "table inet"; then
+        print_success "nftables rules are permanent"
+    else
+        print_error "nftables rules are not permanent"
+    fi
+}
+
+# 4.4 Configure iptables
+check_iptables_configuration() {
+    print_header "4.4 Configure iptables"
+
+    # Ensure iptables packages are installed
+    if dpkg -l | grep -q iptables; then
+        print_success "iptables packages are installed"
+    else
+        print_error "iptables packages are not installed"
+    fi
+
+    # Ensure nftables is not in use with iptables
+    if dpkg -l | grep -q nftables; then
+        print_error "nftables is in use with iptables"
+    else
+        print_success "nftables is not in use with iptables"
+    fi
+
+    # Ensure ufw is not in use with iptables
+    if dpkg -l | grep -q ufw; then
+        print_error "ufw is in use with iptables"
+    else
+        print_success "ufw is not in use with iptables"
+    fi
+
+    # Ensure iptables default deny firewall policy
+    if iptables -L | grep -q "policy DROP"; then
+        print_success "iptables default deny firewall policy is configured"
+    else
+        print_error "iptables default deny firewall policy is not configured"
+    fi
+
+    # Ensure iptables loopback traffic is configured
+    if iptables -L | grep -q "ACCEPT all -- lo"; then
+        print_success "iptables loopback traffic is configured"
+    else
+        print_error "iptables loopback traffic is not configured"
+    fi
+
+    # Ensure iptables outbound and established connections are configured
+    if iptables -L | grep -q "ACCEPT all -- anywhere anywhere state RELATED,ESTABLISHED"; then
+        print_success "iptables outbound and established connections are configured"
+    else
+        print_error "iptables outbound and established connections are not configured"
+    fi
+
+    # Ensure iptables firewall rules exist for all open ports
+    open_ports=$(ss -tuln | grep LISTEN | awk '{print $5}' | cut -d: -f2 | sort -u)
+    for port in $open_ports; do
+        if iptables -L | grep -q "$port"; then
+            print_success "iptables firewall rule exists for port $port"
+        else
+            print_error "iptables firewall rule does not exist for port $port"
+        fi
+    done
+
+    # Ensure ip6tables default deny firewall policy
+    if ip6tables -L | grep -q "policy DROP"; then
+        print_success "ip6tables default deny firewall policy is configured"
+    else
+        print_error "ip6tables default deny firewall policy is not configured"
+    fi
+
+    # Ensure ip6tables loopback traffic is configured
+    if ip6tables -L | grep -q "ACCEPT all -- lo"; then
+        print_success "ip6tables loopback traffic is configured"
+    else
+        print_error "ip6tables loopback traffic is not configured"
+    fi
+
+    # Ensure ip6tables outbound and established connections are configured
+    if ip6tables -L | grep -q "ACCEPT all -- anywhere anywhere state RELATED,ESTABLISHED"; then
+        print_success "ip6tables outbound and established connections are configured"
+    else
+        print_error "ip6tables outbound and established connections are not configured"
+    fi
+
+    # Ensure ip6tables firewall rules exist for all open ports
+    open_ports=$(ss -tuln | grep LISTEN | awk '{print $5}' | cut -d: -f2 | sort -u)
+    for port in $open_ports; do
+        if ip6tables -L | grep -q "$port"; then
+            print_success "ip6tables firewall rule exists for port $port"
+        else
+            print_error "ip6tables firewall rule does not exist for port $port"
+        fi
+    done
+}
+
+check_ssh_server() {
+    print_header "5.1 SSH Server"
+
+    # Ensure permissions on /etc/ssh/sshd_config are configured
+    if [ "$(stat -c %a /etc/ssh/sshd_config)" -eq 600 ]; then
+        print_success "Permissions on /etc/ssh/sshd_config are configured"
+    else
+        print_error "Permissions on /etc/ssh/sshd_config are not configured"
+    fi
+
+    # Ensure permissions on SSH private host key files are configured
+    private_keys=$(find /etc/ssh -type f -name 'ssh_host_*_key')
+    for key in $private_keys; do
+        if [ "$(stat -c %a "$key")" -eq 600 ]; then
+            print_success "Permissions on SSH private host key file $key are configured"
+        else
+            print_error "Permissions on SSH private host key file $key are not configured"
+        fi
+    done
+
+    # Ensure permissions on SSH public host key files are configured
+    public_keys=$(find /etc/ssh -type f -name 'ssh_host_*_key.pub')
+    for key in $public_keys; do
+        if [ "$(stat -c %a "$key")" -eq 644 ]; then
+            print_success "Permissions on SSH public host key file $key are configured"
+        else
+            print_error "Permissions on SSH public host key file $key are not configured"
+        fi
+    done
+
+    # Ensure sshd access is configured
+    if grep -q "^AllowUsers" /etc/ssh/sshd_config; then
+        print_success "sshd access is configured"
+    else
+        print_error "sshd access is not configured"
+    fi
+
+    # Ensure sshd Banner is configured
+    if grep -q "^Banner" /etc/ssh/sshd_config; then
+        print_success "sshd Banner is configured"
+    else
+        print_error "sshd Banner is not configured"
+    fi
+
+    # Ensure sshd Ciphers are configured
+    if grep -q "^Ciphers" /etc/ssh/sshd_config; then
+        print_success "sshd Ciphers are configured"
+    else
+        print_error "sshd Ciphers are not configured"
+    fi
+
+    # Ensure sshd ClientAliveInterval and ClientAliveCountMax are configured
+    if grep -q "^ClientAliveInterval" /etc/ssh/sshd_config && grep -q "^ClientAliveCountMax" /etc/ssh/sshd_config; then
+        print_success "sshd ClientAliveInterval and ClientAliveCountMax are configured"
+    else
+        print_error "sshd ClientAliveInterval and ClientAliveCountMax are not configured"
+    fi
+
+    # Ensure sshd DisableForwarding is enabled
+    if grep -q "^DisableForwarding yes" /etc/ssh/sshd_config; then
+        print_success "sshd DisableForwarding is enabled"
+    else
+        print_error "sshd DisableForwarding is not enabled"
+    fi
+
+    # Ensure sshd GSSAPIAuthentication is disabled
+    if grep -q "^GSSAPIAuthentication no" /etc/ssh/sshd_config; then
+        print_success "sshd GSSAPIAuthentication is disabled"
+    else
+        print_error "sshd GSSAPIAuthentication is not disabled"
+    fi
+
+    # Ensure sshd HostbasedAuthentication is disabled
+    if grep -q "^HostbasedAuthentication no" /etc/ssh/sshd_config; then
+        print_success "sshd HostbasedAuthentication is disabled"
+    else
+        print_error "sshd HostbasedAuthentication is not disabled"
+    fi
+
+    # Ensure sshd IgnoreRhosts is enabled
+    if grep -q "^IgnoreRhosts yes" /etc/ssh/sshd_config; then
+        print_success "sshd IgnoreRhosts is enabled"
+    else
+        print_error "sshd IgnoreRhosts is not enabled"
+    fi
+
+    # Ensure sshd KexAlgorithms is configured
+    if grep -q "^KexAlgorithms" /etc/ssh/sshd_config; then
+        print_success "sshd KexAlgorithms is configured"
+    else
+        print_error "sshd KexAlgorithms are not configured"
+    fi
+
+    # Ensure sshd LoginGraceTime is configured
+    if grep -q "^LoginGraceTime" /etc/ssh/sshd_config; then
+        print_success "sshd LoginGraceTime is configured"
+    else
+        print_error "sshd LoginGraceTime is not configured"
+    fi
+
+    # Ensure sshd LogLevel is configured
+    if grep -q "^LogLevel" /etc/ssh/sshd_config; then
+        print_success "sshd LogLevel is configured"
+    else
+        print_error "sshd LogLevel is not configured"
+    fi
+
+    # Ensure sshd MACs are configured correctly
+    if grep -q "^MACs" /etc/ssh/sshd_config; then
+        print_success "sshd MACs are configured correctly"
+    else
+        print_error "sshd MACs are not configured correctly"
+    fi
+
+    # Ensure sshd MaxAuthTries is configured
+    if grep -q "^MaxAuthTries" /etc/ssh/sshd_config; then
+        print_success "sshd MaxAuthTries is configured"
+    else
+        print_error "sshd MaxAuthTries is not configured"
+    fi
+
+    # Ensure sshd MaxSessions is configured
+    if grep -q "^MaxSessions" /etc/ssh/sshd_config; then
+        print_success "sshd MaxSessions is configured"
+    else
+        print_error "sshd MaxSessions is not configured"
+    fi
+
+    # Ensure sshd MaxStartups is configured
+    if grep -q "^MaxStartups" /etc/ssh/sshd_config; then
+        print_success "sshd MaxStartups is configured"
+    else
+        print_error "sshd MaxStartups is not configured"
+    fi
+
+    # Ensure sshd PermitEmptyPasswords is disabled
+    if grep -q "^PermitEmptyPasswords no" /etc/ssh/sshd_config; then
+        print_success "sshd PermitEmptyPasswords is disabled"
+    else
+        print_error "sshd PermitEmptyPasswords is not disabled"
+    fi
+
+    # Ensure sshd PermitRootLogin is disabled
+    if grep -q "^PermitRootLogin no" /etc/ssh/sshd_config; then
+        print_success "sshd PermitRootLogin is disabled"
+    else
+        print_error "sshd PermitRootLogin is not disabled"
+    fi
+
+    # Ensure sshd PermitUserEnvironment is disabled
+    if grep -q "^PermitUserEnvironment no" /etc/ssh/sshd_config; then
+        print_success "sshd PermitUserEnvironment is disabled"
+    else
+        print_error "sshd PermitUserEnvironment is not disabled"
+    fi
+
+    # Ensure sshd UsePAM is enabled
+    if grep -q "^UsePAM yes" /etc/ssh/sshd_config; then
+        print_success "sshd UsePAM is enabled"
+    else
+        print_error "sshd UsePAM is not enabled"
+    fi
+}
+
 main() {
     echo "============================="
     echo "======= CIS Benchmark ======="
@@ -457,6 +862,16 @@ main() {
     check_network_devices
     check_network_kernel_modules
     check_network_kernel_parameters
+
+    print_header "4 Firewall"
+    check_single_firewall
+    check_ufw_configuration
+    # check_nftables_configuration
+    # check_iptables_configuration
+
+    print_header "5 Secure Shell"
+    check_ssh_server
+    
 
 }
 
