@@ -1821,16 +1821,30 @@ check_system_maintenance() {
 
 main() {
 
-    apt update && apt install -y auditd net-tools
+    if dpkg -l | grep -q "^ii  auditd "; then
+    echo "auditd is installed"
+    else
+        echo "auditd is not installed. Installing now..."
+        sudo apt-get update
+        sudo apt-get install -y auditd
+    fi
+
+    if dpkg -l | grep -q "^ii  net-tools "; then
+        echo "net-tools is already installed"
+    else
+        echo "net-tools is not installed. Installing now..."
+        sudo apt-get update
+        sudo apt-get install -y net-tools
+    fi
 
     echo "============================="
     echo "======= CIS Benchmark ======="
     echo "====== Ubuntu 24.04 LTS ====="
     echo "============================="
-    echo ""
+    echo -e "\n"
     echo "This script will Audit your system with the CIS Benchmark requirements"
     echo "If error occurs, please install required dependencies or try running as root"
-    echo ""
+    echo -e "\n"
 
     print_header "1 Initial Setup"
     check_filesystem_kernel_modules
@@ -1896,9 +1910,9 @@ main() {
     check_all_permissions
     check_system_maintenance
 
-    echo "\n============================="
+    echo -e "\n============================="
     print_header "End of CIS Benchmark"
-    echo "\n============================="
+    echo -e "\n============================="
     print_header "Check CIS-Ubuntu-24.04-LTS.PDF file for remediation steps"
     print_header "Github @NathanArkov"
 
