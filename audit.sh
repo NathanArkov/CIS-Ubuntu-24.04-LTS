@@ -1921,13 +1921,12 @@ main() {
     TOTAL=$OK+$NOK
     echo -e "\n============================="
     print_header "End of CIS Benchmark"
-    echo -e "[-OK] : $OK Tests passed"
-    echo -e "[NOK] : $NOK Tests failed"
-    echo -e "[TOTAL] : $TOTAL Tests"
+    echo -e "${GREEN}[---OK] : $OK Tests passed${NC}"
+    echo -e "${RED}[--NOK] : $NOK Tests failed${NC}"
+    echo -e "${YELLOW}[TOTAL] : $TOTAL Tests${NC}"
     echo -e "\n============================="
     print_header "Check CIS-Ubuntu-24.04-LTS.PDF file for remediation steps"
     print_header "Github @NathanArkov"
-
 
 }
 
