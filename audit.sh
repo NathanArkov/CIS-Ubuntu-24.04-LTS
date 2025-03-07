@@ -1853,6 +1853,10 @@ main() {
     echo "======= CIS Benchmark ======="
     echo "====== Ubuntu 24.04 LTS ====="
     echo "============================="
+    echo ""
+    echo "This script will Audit your system with the CIS Benchmark requirements"
+    echo "If error occurs, please install required dependencies or try running as root"
+    echo ""
 
     print_header "1 Initial Setup"
     check_filesystem_kernel_modules
