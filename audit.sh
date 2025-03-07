@@ -1680,80 +1680,41 @@ check_integrity_checking() {
     fi
 }
 
-# 7 System Maintenance
-check_system_maintenance() {
+
+check_all_permissions() {
+    declare -A files_permissions=(
+        ["/etc/passwd"]=644
+        ["/etc/passwd-"]=600
+        ["/etc/group"]=644
+        ["/etc/group-"]=600
+        ["/etc/shadow"]=600
+        ["/etc/shadow-"]=600
+        ["/etc/gshadow"]=600
+        ["/etc/gshadow-"]=600
+        ["/etc/shells"]=644
+        ["/etc/security/opasswd"]=600
+    )
+
     print_header "7 System Maintenance"
 
-    # 7.1 System File Permissions
-    # 7.1.1 Ensure permissions on /etc/passwd are configured
-    if [ "$(stat -c %a /etc/passwd)" -eq 644 ]; then
-        print_success "Permissions on /etc/passwd are configured"
-    else
-        print_error "Permissions on /etc/passwd are not configured"
-    fi
+    for file in "${!files_permissions[@]}"; do
+        expected_perm=${files_permissions[$file]}
+        actual_perm=$(stat -c %a "$file")
 
-    # 7.1.2 Ensure permissions on /etc/passwd- are configured
-    if [ "$(stat -c %a /etc/passwd-)" -eq 600 ]; then
-        print_success "Permissions on /etc/passwd- are configured"
-    else
-        print_error "Permissions on /etc/passwd- are not configured"
-    fi
+        if [ "$actual_perm" -eq "$expected_perm" ]; then
+            print_success "$file permissions are correctly set to $expected_perm."
+        else
+            print_error  "$file permissions are not correctly set. Expected: $expected_perm, Found: $actual_perm."
+        fi
+    done
+}
 
-    # 7.1.3 Ensure permissions on /etc/group are configured
-    if [ "$(stat -c %a /etc/group)" -eq 644 ]; then
-        print_success "Permissions on /etc/group are configured"
-    else
-        print_error "Permissions on /etc/group are not configured"
-    fi
 
-    # 7.1.4 Ensure permissions on /etc/group- are configured
-    if [ "$(stat -c %a /etc/group-)" -eq 600 ]; then
-        print_success "Permissions on /etc/group- are configured"
-    else
-        print_error "Permissions on /etc/group- are not configured"
-    fi
+# 7 System Maintenance
+check_system_maintenance() {
+    print_header "7.1 System Maintenance"
 
-    # 7.1.5 Ensure permissions on /etc/shadow are configured
-    if [ "$(stat -c %a /etc/shadow)" -eq 600 ]; then
-        print_success "Permissions on /etc/shadow are configured"
-    else
-        print_error "Permissions on /etc/shadow are not configured"
-    fi
-
-    # 7.1.6 Ensure permissions on /etc/shadow- are configured
-    if [ "$(stat -c %a /etc/shadow-)" -eq 600 ]; then
-        print_success "Permissions on /etc/shadow- are configured"
-    else
-        print_error "Permissions on /etc/shadow- are not configured"
-    fi
-
-    # 7.1.7 Ensure permissions on /etc/gshadow are configured
-    if [ "$(stat -c %a /etc/gshadow)" -eq 600 ]; then
-        print_success "Permissions on /etc/gshadow are configured"
-    else
-        print_error "Permissions on /etc/gshadow are not configured"
-    fi
-
-    # 7.1.8 Ensure permissions on /etc/gshadow- are configured
-    if [ "$(stat -c %a /etc/gshadow-)" -eq 600 ]; then
-        print_success "Permissions on /etc/gshadow- are configured"
-    else
-        print_error "Permissions on /etc/gshadow- are not configured"
-    fi
-
-    # 7.1.9 Ensure permissions on /etc/shells are configured
-    if [ "$(stat -c %a /etc/shells)" -eq 644 ]; then
-        print_success "Permissions on /etc/shells are configured"
-    else
-        print_error "Permissions on /etc/shells are not configured"
-    fi
-
-    # 7.1.10 Ensure permissions on /etc/security/opasswd are configured
-    if [ "$(stat -c %a /etc/security/opasswd)" -eq 600 ]; then
-        print_success "Permissions on /etc/security/opasswd are configured"
-    else
-        print_error "Permissions on /etc/security/opasswd are not configured"
-    fi
+    
 
     # 7.1.11 Ensure world writable files and directories are secured
     if find / -xdev -type f -perm -002 -exec stat -c "%n" {} + | grep -q .; then
@@ -1902,6 +1863,7 @@ main() {
     check_integrity_checking
 
     print_header "7 System Maintenance"
+    check_all_permissions
     check_system_maintenance
 
     echo "============================="
