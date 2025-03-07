@@ -10,12 +10,12 @@ print_header() {
 
 # Function to display success messages
 print_success() {
-    echo -e "${GREEN}[OK]${NC} $1"
+    echo -e "${GREEN}[-OK]${NC} $1"
 }
 
 # Function to display error messages
 print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    echo -e "${RED}[NOK]${NC} $1"
 }
 
 
@@ -193,6 +193,58 @@ check_gnome_display_manager() {
     fi
 }
 
+# 2.1 Configure Server Services
+check_server_services() {
+    print_header "2.1 Configure Server Services"
+
+    services=("autofs" "avahi-daemon" "dhcpd" "named" "dnsmasq" "vsftpd" "slapd" "dovecot" "nfs" "nfs-server" "rpcbind" "rsync" "smb" "snmpd" "tftpd" "squid" "httpd" "xinetd" "X" "postfix")
+
+    for service in "${services[@]}"; do
+        if systemctl is-active --quiet "$service"; then
+            print_error "$service service is in use"
+        else
+            print_success "$service service is not in use"
+        fi
+    done
+
+    # Ensure mail transfer agent is configured for local-only mode
+    if netstat -an | grep -q ':25.*LISTEN'; then
+        if netstat -an | grep -q '127.0.0.1:25.*LISTEN'; then
+            print_success "Mail transfer agent is configured for local-only mode"
+        else
+            print_error "Mail transfer agent is not configured for local-only mode"
+        fi
+    else
+        print_success "Mail transfer agent is not listening on port 25"
+    fi
+
+    # Ensure only approved services are listening on a network interface
+    approved_services=("sshd" "httpd" "httpsd")
+    listening_services=$(netstat -tuln | grep LISTEN | awk '{print $4}' | cut -d: -f2 | sort -u)
+    for service in $listening_services; do
+        if [[ ! " ${approved_services[@]} " =~ " ${service} " ]]; then
+            print_error "Unapproved service $service is listening on a network interface"
+        else
+            print_success "Approved service $service is listening on a network interface"
+        fi
+    done
+}
+
+# 2.2 Configure Client Services
+check_client_services() {
+    print_header "2.2 Configure Client Services"
+
+    clients=("nis" "rsh-client" "talk" "telnet" "ldap-utils" "ftp")
+
+    for client in "${clients[@]}"; do
+        if dpkg -l | grep -q "$client"; then
+            print_error "$client is installed"
+        else
+            print_success "$client is not installed"
+        fi
+    done
+}
+
 main() {
     echo "============================="
     echo "======= CIS Benchmark ======="
@@ -206,7 +258,8 @@ main() {
     check_error_reporting
     check_warning_banners
     check_gnome_display_manager
-
+    check_server_services
+    check_client_services
 }
 
 main
