@@ -1849,6 +1849,9 @@ check_system_maintenance() {
 }
 
 main() {
+
+    apt update && apt install -y auditd net-tools
+
     echo "============================="
     echo "======= CIS Benchmark ======="
     echo "====== Ubuntu 24.04 LTS ====="
