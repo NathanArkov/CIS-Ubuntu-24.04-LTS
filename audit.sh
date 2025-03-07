@@ -1756,21 +1756,21 @@ check_system_maintenance() {
     fi
 
     # 7.1.11 Ensure world writable files and directories are secured
-    if find / -xdev -type f -perm -002 -exec stat -c "%n" {} \; | grep -q .; then
+    if find / -xdev -type f -perm -002 -exec stat -c "%n" {} + | grep -q .; then
         print_error "World writable files and directories are not secured"
     else
         print_success "World writable files and directories are secured"
     fi
 
     # 7.1.12 Ensure no files or directories without an owner and a group exist
-    if find / -xdev \( -nouser -o -nogroup \) -exec stat -c "%n" {} \; | grep -q .; then
+    if find / -xdev \( -nouser -o -nogroup \) -exec stat -c "%n" {} + | grep -q .; then
         print_error "Files or directories without an owner and a group exist"
     else
         print_success "No files or directories without an owner and a group exist"
     fi
 
     # 7.1.13 Ensure SUID and SGID files are reviewed
-    if find / -xdev \( -perm -4000 -o -perm -2000 \) -exec stat -c "%n" {} \; | grep -q .; then
+    if find / -xdev \( -perm -4000 -o -perm -2000 \) -exec stat -c "%n" {} + | grep -q .; then
         print_error "SUID and SGID files need to be reviewed"
     else
         print_success "No SUID and SGID files need to be reviewed"
@@ -1841,7 +1841,7 @@ check_system_maintenance() {
     fi
 
     # 7.2.10 Ensure local interactive user dot files access is configured
-    if awk -F: '($3 >= 1000 && $7 != "/usr/sbin/nologin" && $7 != "/bin/false") {print $6}' /etc/passwd | while read -r dir; do find "$dir" -name ".*" -perm /002 -exec stat -c "%n" {} \; | grep -q . && echo "$dir"; done | grep -q .; then
+    if awk -F: '($3 >= 1000 && $7 != "/usr/sbin/nologin" && $7 != "/bin/false") {print $6}' /etc/passwd | while read -r dir; do find "$dir" -name ".*" -perm /002 -exec stat -c "%n" {} + | grep -q . && echo "$dir"; done | grep -q .; then
         print_error "Some local interactive user dot files access is not configured"
     else
         print_success "All local interactive user dot files access is configured"
