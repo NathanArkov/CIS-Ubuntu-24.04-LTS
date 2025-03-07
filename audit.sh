@@ -2,7 +2,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
-FIREWALL="$(dpkg -l |awk '/^[hi]i/{print $2}' | grep -E 'iptables|nftables|ufw')"
+FIREWALL="$(dpkg -l |awk '/^[hi]i/{print $2}' | grep -E 'iptables|nftables|ufw' | sort)"
 TAB_FIREWALL=($FIREWALL)
 
 
@@ -1899,13 +1899,13 @@ main() {
             ;;
     esac
 
-    if [[ "${values[0]}" == "iptables" && "${values[1]}" == "nftables" ]]; then
+    if [[ "${TAB_FIREWALL[0]}" == "iptables" && "${TAB_FIREWALL[1]}" == "nftables" ]]; then
         check_iptables_configuration
         check_nftables_configuration
-    elif [[ "${values[0]}" == "nftables" && "${values[1]}" == "ufw" ]]; then
+    elif [[ "${TAB_FIREWALL[0]}" == "nftables" && "${TAB_FIREWALL[1]}" == "ufw" ]]; then
         check_nftables_configuration
         check_ufw_configuration
-    elif [[ "${values[0]}" == "iptables" && "${values[1]}" == "ufw" ]]; then
+    elif [[ "${TAB_FIREWALL[0]}" == "iptables" && "${TAB_FIREWALL[1]}" == "ufw" ]]; then
         check_iptables_configuration
         check_ufw_configuration
     fi
