@@ -1895,15 +1895,15 @@ main() {
         ufw)
             check_ufw_configuration
             ;;
-        iptables|nftables)
+        [iptables-nftables])
             check_iptables_configuration
             check_nftables_configuration
             ;;
-        iptables|ufw)
+        [iptables-ufw])
             check_iptables_configuration
             check_ufw_configuration
             ;;
-        nftables|ufw)
+        [nftables-ufw])
             check_nftables_configuration
             check_ufw_configuration
             ;;
