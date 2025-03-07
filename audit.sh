@@ -1686,13 +1686,13 @@ check_integrity_checking() {
 check_all_permissions() {
     declare -A files_permissions=(
         ["/etc/passwd"]=644
-        ["/etc/passwd-"]=600
+        ["/etc/passwd-"]=644
         ["/etc/group"]=644
-        ["/etc/group-"]=600
-        ["/etc/shadow"]=600
-        ["/etc/shadow-"]=600
-        ["/etc/gshadow"]=600
-        ["/etc/gshadow-"]=600
+        ["/etc/group-"]=644
+        ["/etc/shadow"]=640
+        ["/etc/shadow-"]=640
+        ["/etc/gshadow"]=640
+        ["/etc/gshadow-"]=640
         ["/etc/shells"]=644
         ["/etc/security/opasswd"]=600
     )
