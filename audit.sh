@@ -2,6 +2,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+FIREWALL="$(dpkg -l |awk '/^[hi]i/{print $2}' | grep -E 'iptables|nftables|ufw')"
+
 
 # Function to display section headers
 print_header() {
@@ -1844,9 +1846,29 @@ main() {
 
     print_header "4 Firewall"
     check_single_firewall
-    check_ufw_configuration
-    # check_nftables_configuration
-    # check_iptables_configuration
+    case $FIREWALL in 
+        iptables)
+            check_iptables_configuration
+            ;;
+        nftables)
+            check_nftables_configuration
+            ;;
+        ufw)
+            check_ufw_configuration
+            ;;
+        iptables|nftables)
+            check_iptables_configuration
+            check_nftables_configuration
+            ;;
+        iptables|ufw)
+            check_iptables_configuration
+            check_ufw_configuration
+            ;;
+        nftables|ufw)
+            check_nftables_configuration
+            check_ufw_configuration
+            ;;
+    esac
 
     print_header "5 Secure Shell"
     check_ssh_server
