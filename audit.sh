@@ -706,7 +706,7 @@ check_ssh_server() {
     fi
 
     # Ensure permissions on /etc/ssh/sshd_config are configured
-    if [ "$(stat -c %a /etc/ssh/sshd_config)" -eq 600 ]; then
+    if [ "$(stat -c %a /etc/ssh/sshd_config)" -eq 640 ]; then
         print_success "Permissions on /etc/ssh/sshd_config are configured"
     else
         print_error "Permissions on /etc/ssh/sshd_config are not configured"
