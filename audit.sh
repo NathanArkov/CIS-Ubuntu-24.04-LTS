@@ -673,15 +673,9 @@ check_iptables_configuration() {
     done
 }
 
+# 5.1 SSH Server
 check_ssh_server() {
     print_header "5.1 SSH Server"
-
-    # Ensure permissions on /etc/ssh/sshd_config are configured
-    if [ "$(stat -c %a /etc/ssh/sshd_config)" -eq 600 ]; then
-        print_success "Permissions on /etc/ssh/sshd_config are configured"
-    else
-        print_error "Permissions on /etc/ssh/sshd_config are not configured"
-    fi
 
     # Ensure permissions on SSH private host key files are configured
     private_keys=$(find /etc/ssh -type f -name 'ssh_host_*_key')
@@ -702,6 +696,19 @@ check_ssh_server() {
             print_error "Permissions on SSH public host key file $key are not configured"
         fi
     done
+
+    # Check if sshd is installed
+    if ! command -v sshd &> /dev/null; then
+        print_error "sshd is not installed. Skipping SSH server checks."
+        return
+    fi
+
+    # Ensure permissions on /etc/ssh/sshd_config are configured
+    if [ "$(stat -c %a /etc/ssh/sshd_config)" -eq 600 ]; then
+        print_success "Permissions on /etc/ssh/sshd_config are configured"
+    else
+        print_error "Permissions on /etc/ssh/sshd_config are not configured"
+    fi
 
     # Ensure sshd access is configured
     if grep -q "^AllowUsers" /etc/ssh/sshd_config; then
@@ -871,7 +878,7 @@ main() {
 
     print_header "5 Secure Shell"
     check_ssh_server
-    
+
 
 }
 
