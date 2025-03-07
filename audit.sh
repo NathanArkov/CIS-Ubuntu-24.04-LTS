@@ -1837,6 +1837,8 @@ main() {
         sudo apt-get install -y net-tools
     fi
 
+    clear
+
     echo "============================="
     echo "======= CIS Benchmark ======="
     echo "====== Ubuntu 24.04 LTS ====="
