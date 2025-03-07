@@ -285,12 +285,20 @@ check_job_schedulers() {
 
     # Ensure permissions on cron files and directories are configured
     cron_files=("/etc/crontab" "/etc/cron.hourly" "/etc/cron.daily" "/etc/cron.weekly" "/etc/cron.monthly" "/etc/cron.d")
+
     for file in "${cron_files[@]}"; do
         if [ -e "$file" ]; then
-            if stat -c "%a" "$file" | grep -qE "^[0-7]00$"; then
-                print_success "Permissions on $file are configured"
+            if [ "$file" == "/etc/crontab" ]; then
+                required_perms=644
             else
-                print_error "Permissions on $file are not configured"
+                required_perms=755
+            fi
+
+            current_perms=$(stat -c "%a" "$file")
+            if [ "$current_perms" -eq "$required_perms" ]; then
+                print_success "Permissions on $file are configured correctly"
+            else
+                print_error "Permissions on $file are not configured correctly."
             fi
         else
             print_error "$file does not exist"
