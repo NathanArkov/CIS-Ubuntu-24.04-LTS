@@ -18,7 +18,6 @@ print_error() {
     echo -e "${RED}[NOK]${NC} $1"
 }
 
-
 # 1.1.1 Configure Filesystem Kernel Modules
 check_filesystem_kernel_modules() {
     print_header "1.1.1 Configure Filesystem Kernel Modules"
@@ -32,7 +31,7 @@ check_filesystem_kernel_modules() {
                 print_error "$module does not have /bin/true or /bin/false entry"
             fi
 
-            if grep -q "blacklist $module" /etc/modprobe.d/*; then
+            if grep -q "blacklist $module" /etc.modprobe.d/*; then
                 print_success "$module is deny listed"
             else
                 print_error "$module is not deny listed"
@@ -455,9 +454,9 @@ main() {
     check_job_schedulers
 
     print_header "3 Network Configuration"
-    sudo check_network_devices
-    sudo check_network_kernel_modules
-    sudo check_network_kernel_parameters
+    check_network_devices
+    check_network_kernel_modules
+    check_network_kernel_parameters
 
 }
 
