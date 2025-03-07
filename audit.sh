@@ -2,7 +2,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
-FIREWALL="$(dpkg -l | grep -qE 'iptables|nftables|ufw')"
+FIREWALL="$(dpkg -l |awk '/^[hi]i/{print $2}' | grep -E 'iptables|nftables|ufw')"
 
 
 # Function to display section headers
